@@ -1,0 +1,32 @@
+{
+  "name": "paseo-auto-pin",
+  "version": "0.1.0",
+  "description": "Paseo plugin that automatically pins newly created workspaces, with a sidebar panel to view and toggle the switch",
+  "license": "MIT",
+  "author": "stv1024",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stv1024/paseo-auto-pin.git"
+  },
+  "keywords": [
+    "paseo",
+    "paseo-plugin",
+    "workspace",
+    "pin"
+  ],
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@getpaseo/client": "0.7.2"
+  },
+  "devDependencies": {
+    "@getpaseo/plugin": "0.7.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "19.2.0",
+    "react-native": "0.81.5",
+    "typescript": "^5.9.3",
+    "zod": "^4.4.3"
+  }
+}
