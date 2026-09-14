@@ -1,0 +1,23 @@
+import type { PluginServerContext } from "@getpaseo/plugin/server";
+import { isEnabled } from "./store";
+import { pinWorkspace } from "./pin";
+
+let running = false;
+export function isRunning(): boolean { return running; }
+
+export function registerAutoPin(server: PluginServerContext) {
+  const unsubscribe = server.on("workspace.created", async ({ workspace }, { signal }) => {
+    if (signal.aborted || workspace.archivedAt || !(await isEnabled())) return;
+    if (signal.aborted) return;
+    try {
+      await pinWorkspace(workspace.id);
+      console.log(`[auto-pin] pinned new workspace ${workspace.id}`);
+    } catch (error) {
+      console.error(`[auto-pin] failed to pin ${workspace.id}:`, error);
+      throw error;
+    }
+  });
+  running = true;
+  console.log("[auto-pin] workspace.created hook registered");
+  return () => { running = false; unsubscribe(); };
+}

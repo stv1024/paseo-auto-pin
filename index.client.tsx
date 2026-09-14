@@ -1,12 +1,9 @@
-import type { PluginContext } from "@getpaseo/plugin";
-import { autopinEnsure, autopinToggle } from "./src/contracts.shared";
-import { handleEnsure, handleToggle } from "./src/handlers.server";
-import { AutoPinPanel } from "./src/panel.client";
-import { publishAutopinState } from "./src/state.client";
+import type { PluginClientContext } from "@getpaseo/plugin/client";
+import { autopinEnsure, autopinToggle } from "./shared/contracts";
+import { AutoPinPanel } from "./client/panel";
+import { publishAutopinState } from "./client/state";
 
-export default function contribute(plugin: PluginContext) {
-  plugin.handle(autopinEnsure, handleEnsure);
-  plugin.handle(autopinToggle, handleToggle);
+export default function contribute(plugin: PluginClientContext) {
   plugin.addSurface("autopin", AutoPinPanel);
   plugin.addSidebarItem({
     id: "autopin",
@@ -28,7 +25,7 @@ export default function contribute(plugin: PluginContext) {
       const result = await rpc(autopinToggle, {});
       // Feed the shared client store so an open Auto-Pin panel reflects the
       // new state immediately instead of waiting for its reconcile poll.
-      publishAutopinState({ ...result, running: true });
+      publishAutopinState(result);
     },
   });
   plugin.addCommandCenterItem({
@@ -41,14 +38,11 @@ export default function contribute(plugin: PluginContext) {
       openSurface("autopin");
     },
   });
-  plugin.addClientSide((client) => {
-    // Kick the daemon-side watcher as soon as any client connects, so new
-    // workspaces are pinned even before the toggle command is ever used.
-    void client
-      .rpc(autopinEnsure, {})
-      .then(publishAutopinState)
-      .catch(() => undefined);
-    return () => {};
+  let disposed = false;
+  void plugin.rpc(autopinEnsure, {}).then((result) => {
+    if (!disposed) publishAutopinState(result);
+  }).catch(() => {
+    if (!disposed) publishAutopinState({ running: false });
   });
-  return () => {};
+  return () => { disposed = true; };
 }

@@ -19,7 +19,7 @@ async function load(): Promise<PluginConfig> {
   if (cached) return cached;
   try {
     const raw = JSON.parse(await readFile(CONFIG_PATH, "utf8")) as Partial<PluginConfig>;
-    cached = { ...DEFAULTS, ...raw };
+    cached = { enabled: typeof raw?.enabled === "boolean" ? raw.enabled : DEFAULTS.enabled };
   } catch {
     cached = { ...DEFAULTS };
   }
@@ -32,7 +32,18 @@ export async function isEnabled(): Promise<boolean> {
 
 export async function setEnabled(enabled: boolean): Promise<void> {
   const config = { ...(await load()), enabled };
-  cached = config;
   await mkdir(DATA_DIR, { recursive: true });
   await writeFile(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  cached = config;
+}
+
+let pending: Promise<unknown> = Promise.resolve();
+export function toggleEnabled(): Promise<boolean> {
+  const result = pending.then(async () => {
+    const enabled = !(await isEnabled());
+    await setEnabled(enabled);
+    return enabled;
+  });
+  pending = result.catch(() => undefined);
+  return result;
 }

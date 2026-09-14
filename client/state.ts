@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
  * Module-scope state shared by everything running in this client bundle: the
  * command-center toggle, the sidebar panel, and the connect-time ensure kick.
  * This is what lets a command-palette toggle update an open panel instantly —
- * plugin RPC is request/response only (no push channel in Paseo 0.7.2), so
+ * plugin RPC is request/response only (these RPCs use request/response), so
  * same-client feedback goes through this store and cross-client drift is
  * covered by the panel's slow poll.
  */

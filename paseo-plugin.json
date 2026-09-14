@@ -1,3 +1,4 @@
 {
-  "id": "auto-pin"
+  "id": "auto-pin",
+  "requirements": { "paseo": ">=0.8.0 <0.9.0" }
 }

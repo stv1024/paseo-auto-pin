@@ -1,8 +1,9 @@
-import { Icon, useRpc, type PluginSurfaceProps } from "@getpaseo/plugin";
+import { useRpc, type PluginSurfaceProps } from "@getpaseo/plugin/client";
+import { Icon } from "@getpaseo/plugin/client/react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { autopinEnsure, autopinToggle } from "./contracts.shared";
-import { publishAutopinState, useAutopinState } from "./state.client";
+import { autopinEnsure, autopinToggle } from "../shared/contracts";
+import { publishAutopinState, useAutopinState } from "./state";
 
 // The store handles same-client updates; this poll only reconciles changes
 // made from other clients, so it can be slow.
@@ -43,14 +44,16 @@ export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
 
   const handleToggle = useCallback(async () => {
     if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
       const result = await toggle({});
-      publishAutopinState({ ...result, running: true });
+      publishAutopinState(result);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,10 +171,10 @@ export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
         />
         <Text style={styles.statusText}>
           {running === null
-            ? "Watcher status unknown"
+            ? "Hook status unknown"
             : running
-              ? "Workspace watcher running"
-              : "Workspace watcher not running"}
+              ? "Workspace-created hook active"
+              : "Workspace-created hook inactive"}
         </Text>
       </View>
 

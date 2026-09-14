@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 ? 2026-09-14
+
+- Migrate to the Paseo 0.8 manifest, split entry points, directory boundaries, and SDK imports.
+- Replace the workspace watcher and timestamp heuristics with the native `workspace.created` hook, active without a connected client.
+- Preserve existing switch settings; serialize concurrent toggles and only update cached settings after a successful write.
+- Report hook registration status in the panel and add lifecycle/persistence regression tests.
+- Verify loading and automatic pinning against the local Paseo 0.8.0 daemon.
+
 ## 0.1.0 — 2026-09-07
 
 Initial release.
