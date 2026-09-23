@@ -1,3 +1,6 @@
 node_modules/
 *.tsbuildinfo
 .DS_Store
+
+# Personal Paseo workspace preferences (not the plugin manifest).
+/paseo.json

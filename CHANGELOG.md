@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.2.0 ? 2026-09-14
+## 0.3.0 — 2026-09-23
+
+- Target Paseo >=0.9.1 <0.10.0 and pin the client/plugin SDK dependencies to 0.9.1.
+- Add a manifest description for Settings → Plugins and document Paseo's new plugin update commands.
+- Install locked dependencies through the manifest build step for fresh Git installations and updates.
+- Cancel pending pin connections with the workspace lifecycle hook, prevent late handshakes from pinning after cancellation, and bound connection attempts to 5 seconds.
+- Refresh panel RPC callbacks when the host replaces them, and prevent overlapping status polls on slow connections.
+- Keep existing switch settings and the workspace-created lifecycle behavior; add pin transport and cancellation regression coverage.
+- Validate with TypeScript, 20 regression tests, and Paseo 0.9.1's native manifest validator and client/server plugin compiler.
+- Add a repeatable isolated daemon integration test; verify actual plugin loading, client bundle delivery, settings preservation, pinning, disabled behavior, archive restoration, concurrent toggles, and reload against Paseo 0.9.1.
+
+## 0.2.0 — 2026-09-14
 
 - Migrate to the Paseo 0.8 manifest, split entry points, directory boundaries, and SDK imports.
 - Replace the workspace watcher and timestamp heuristics with the native `workspace.created` hook, active without a connected client.

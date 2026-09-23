@@ -24,7 +24,7 @@ describe("workspace-created lifecycle", () => {
     const s = setup();
     expect(isRunning()).toBe(true);
     await s.fire();
-    expect(pinWorkspace).toHaveBeenCalledExactlyOnceWith("new");
+    expect(pinWorkspace).toHaveBeenCalledExactlyOnceWith("new", s.controller.signal);
     s.cleanup();
     expect(isRunning()).toBe(false);
     expect(s.unsubscribe).toHaveBeenCalledOnce();
@@ -44,5 +44,28 @@ describe("workspace-created lifecycle", () => {
     vi.mocked(pinWorkspace).mockRejectedValueOnce(new Error("offline"));
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const s = setup(); await expect(s.fire()).rejects.toThrow("offline"); s.cleanup(); log.mockRestore();
+  });
+  it("does not pin when canceled while reading the switch", async () => {
+    const s = setup();
+    vi.mocked(isEnabled).mockImplementationOnce(async () => {
+      s.controller.abort();
+      return true;
+    });
+    await s.fire(); s.cleanup();
+    expect(pinWorkspace).not.toHaveBeenCalled();
+  });
+  it("does not report expected cancellation as a pin failure", async () => {
+    const s = setup();
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(pinWorkspace).mockImplementationOnce(async () => {
+      s.controller.abort();
+      throw s.controller.signal.reason;
+    });
+    try {
+      await expect(s.fire()).resolves.toBeUndefined();
+      expect(log).not.toHaveBeenCalled();
+    } finally {
+      s.cleanup(); log.mockRestore();
+    }
   });
 });

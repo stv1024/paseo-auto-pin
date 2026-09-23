@@ -10,9 +10,11 @@ export function registerAutoPin(server: PluginServerContext) {
     if (signal.aborted || workspace.archivedAt || !(await isEnabled())) return;
     if (signal.aborted) return;
     try {
-      await pinWorkspace(workspace.id);
+      await pinWorkspace(workspace.id, signal);
+      if (signal.aborted) return;
       console.log(`[auto-pin] pinned new workspace ${workspace.id}`);
     } catch (error) {
+      if (signal.aborted) return;
       console.error(`[auto-pin] failed to pin ${workspace.id}:`, error);
       throw error;
     }

@@ -16,14 +16,15 @@ export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
-  busyRef.current = busy;
 
   useEffect(() => {
     let disposed = false;
+    let polling = false;
     const poll = async () => {
       // Skip the reconcile poll while a toggle is in flight so a stale read
       // can't briefly flip the switch back.
-      if (busyRef.current) return;
+      if (busyRef.current || polling) return;
+      polling = true;
       try {
         const result = await ensure({});
         if (disposed || busyRef.current) return;
@@ -31,6 +32,8 @@ export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
         setError(null);
       } catch (err) {
         if (!disposed) setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        polling = false;
       }
     };
     void poll();
@@ -39,8 +42,7 @@ export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
       disposed = true;
       clearInterval(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- ensure identity is not guaranteed stable across renders
-  }, []);
+  }, [ensure]);
 
   const handleToggle = useCallback(async () => {
     if (busyRef.current) return;
@@ -56,8 +58,7 @@ export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
       busyRef.current = false;
       setBusy(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [toggle]);
 
   const styles = useMemo(
     () => ({
