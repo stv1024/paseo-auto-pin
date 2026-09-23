@@ -1,7 +1,7 @@
 {
   "name": "paseo-auto-pin",
-  "version": "0.3.0",
-  "description": "Paseo plugin that automatically pins newly created workspaces, with a sidebar panel to view and toggle the switch",
+  "version": "0.4.0",
+  "description": "Automatically pin new Paseo workspaces, with defaults and rules for individual projects.",
   "license": "MIT",
   "author": "stv1024",
   "repository": {

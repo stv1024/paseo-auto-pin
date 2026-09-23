@@ -17,9 +17,9 @@ export default function contribute(plugin: PluginClientContext) {
     // ranks palette matches by tier + offset within the title, so a shared
     // prefix makes "auto"/"pin" queries tie and fall back to registration
     // order — this toggle registers first and therefore always ranks first.
-    title: "Auto-Pin: Toggle",
+    title: "Auto-Pin: Toggle Default",
     icon: "Pin",
-    keywords: ["pin", "autopin", "workspace", "auto", "toggle", "enable", "disable"],
+    keywords: ["pin", "autopin", "workspace", "auto", "toggle", "default", "enable", "disable"],
     context: "global",
     async onSelect({ rpc }) {
       const result = await rpc(autopinToggle, {});
@@ -41,8 +41,6 @@ export default function contribute(plugin: PluginClientContext) {
   let disposed = false;
   void plugin.rpc(autopinEnsure, {}).then((result) => {
     if (!disposed) publishAutopinState(result);
-  }).catch(() => {
-    if (!disposed) publishAutopinState({ running: false });
-  });
+  }).catch(() => { /* The panel reports connection failures and retries. */ });
   return () => { disposed = true; };
 }

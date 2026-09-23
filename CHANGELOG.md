@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0 — Unreleased
+
+- Choose **Follow default**, **Always**, or **Never** for each project. Project
+  rules apply to new workspaces, including worktrees, and override the default switch.
+- Browse and search projects in a refreshed Auto-Pin panel, with a clear preview
+  of what each rule does and feedback when settings save or fail.
+- Rename the Command Center toggle to **Auto-Pin: Toggle Default** to make its
+  scope clear. Existing on/off settings carry over unchanged.
+- Preserve concurrent settings changes from multiple clients and prevent late
+  refresh responses from replacing a newer selection.
+- Rewrite the README for users; add a development guide, community post, and GIF
+  recording guide.
+
+Existing pins and archive restoration behave as before. This release does not
+automatically unpin workspaces. Requires Paseo 0.9.1–0.9.x.
+
 ## 0.3.0 — 2026-09-23
 
 - Target Paseo >=0.9.1 <0.10.0 and pin the client/plugin SDK dependencies to 0.9.1.

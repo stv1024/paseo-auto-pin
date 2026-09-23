@@ -5,6 +5,10 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const exec = promisify(execFile);
 
 // Install @getpaseo/cli@0.9.1 in a separate directory, then pass --runtime DIR.
 // All daemon data and test workspaces belong to a fresh temporary directory.
@@ -24,6 +28,7 @@ if (sourceIndex >= 0 && !process.argv[sourceIndex + 1]) {
   throw new Error("--source requires a Git or npm plugin source");
 }
 const source = sourceIndex >= 0 ? process.argv[sourceIndex + 1] : undefined;
+const keepUi = process.argv.includes("--ui");
 const testRoot = await mkdtemp(join(tmpdir(), "paseo-auto-pin-integration-"));
 const home = join(testRoot, "home");
 await mkdir(join(home, "plugin-data"), { recursive: true });
@@ -41,7 +46,10 @@ const disabledSpeech = { provider: "local", explicit: true, enabled: false };
 Object.assign(config, {
   daemonVersion: "0.9.1",
   browserToolsEnabled: false,
-  webUi: { enabled: false, distDir: null },
+  webUi: {
+    enabled: keepUi,
+    distDir: keepUi ? resolve(dirname(requireRuntime.resolve("@getpaseo/server")), "../web-ui") : null,
+  },
   speech: { providers: Object.fromEntries(["dictationStt", "voiceTurnDetection", "voiceStt", "voiceTts"].map((id) => [id, disabledSpeech])) },
 });
 const log = pino({ level: "warn" }, pino.destination(join(testRoot, "daemon.log")));
@@ -58,12 +66,27 @@ async function workspace(id) {
   assert.ok(entry, `workspace ${id} must be present`);
   return entry;
 }
-async function createWorkspace(name) {
+async function createWorkspace(name, git = false) {
   const directory = join(testRoot, name);
   await mkdir(directory);
+  if (git) {
+    await exec("git", ["init", "-b", "main", directory]);
+    await exec("git", ["-c", "user.name=Auto-Pin Test", "-c", "user.email=auto-pin@example.invalid",
+      "-C", directory, "commit", "--allow-empty", "-m", "Initial test commit"]);
+  }
   const result = await client.createWorkspace({ source: { kind: "directory", path: directory }, title: name });
   assert.ok(result.workspace, JSON.stringify(result));
   return result.workspace.id;
+}
+async function createWorktree(projectId, name) {
+  const result = await client.createWorkspace({
+    source: { kind: "worktree", projectId, branchName: name, baseBranch: "main" }, title: name,
+  });
+  assert.ok(result.workspace, JSON.stringify(result));
+  return result.workspace.id;
+}
+async function setRule(projectId, rule) {
+  return client.invokePluginRpc("auto-pin", "autopin.set-project-rule", { projectId, rule });
 }
 async function assertPinned(id) {
   const deadline = Date.now() + 10_000;
@@ -86,6 +109,7 @@ try {
   // The plugin reads the actual bound port from its own isolated Paseo config.
   persisted.daemon.listen = `127.0.0.1:${target.port}`;
   await writeFile(join(home, "config.json"), JSON.stringify(persisted));
+  if (keepUi) console.log(`Test web app: http://${persisted.daemon.listen}`);
   client = new DaemonClient({ url: `ws://${persisted.daemon.listen}/ws`, clientId: "auto-pin-integration", clientType: "cli", reconnect: { enabled: false } });
   await client.connect();
 
@@ -94,11 +118,11 @@ try {
   else await client.installDirectoryPlugin(pluginRoot);
   const catalog = await client.getPluginCatalog();
   assert.ok(catalog.find((item) => item.id === "auto-pin")?.clientBundle, "client bundle must be available");
-  assert.deepEqual(await state(), { running: true, enabled: false });
+  assert.deepEqual(await state(), { running: true, enabled: false, projectRules: {}, revision: 0 });
   console.log("PASS: plugin loads on Paseo 0.9.1 and preserves disabled settings");
 
   await assertUnpinned(await createWorkspace("disabled-switch"));
-  assert.deepEqual(await client.invokePluginRpc("auto-pin", "autopin.toggle", {}), { running: true, enabled: true });
+  assert.equal((await client.invokePluginRpc("auto-pin", "autopin.toggle", {})).enabled, true);
   const pinned = await createWorkspace("enabled-switch");
   await assertPinned(pinned);
   await assertUnpinned(existing);
@@ -110,19 +134,57 @@ try {
   await assertUnpinned(pinned);
   console.log("PASS: restoring an archived workspace does not repin it");
 
+  const work = await createWorkspace("Everyday", true);
+  const experiments = await createWorkspace("Experiments", true);
+  await assertPinned(work);
+  await assertPinned(experiments);
+  const workProject = (await workspace(work)).projectId;
+  const experimentsProject = (await workspace(experiments)).projectId;
+  const projects = await client.invokePluginRpc("auto-pin", "autopin.projects", {});
+  assert.ok(projects.projects.some((item) => item.id === workProject && item.name === "Everyday"));
+  assert.ok(projects.projects.some((item) => item.id === experimentsProject && item.path.endsWith("Experiments")));
+
+  await setRule(experimentsProject, "never");
+  await assertUnpinned(await createWorktree(experimentsProject, "never-with-default-on"));
+  await assertPinned(experiments);
+  await client.invokePluginRpc("auto-pin", "autopin.toggle", {});
+  await setRule(workProject, "always");
+  await assertPinned(await createWorktree(workProject, "always-with-default-off"));
+  await assertUnpinned(await createWorktree(experimentsProject, "never-with-default-off"));
+  await setRule(workProject, "default");
+  await assertUnpinned(await createWorktree(workProject, "follow-default-off"));
+  await client.invokePluginRpc("auto-pin", "autopin.toggle", {});
+  await assertPinned(await createWorktree(workProject, "follow-default-on"));
+  console.log("PASS: project rules override the default for new worktrees; saved pins stay unchanged");
+
+  await assert.rejects(() => setRule(workProject, "invalid"));
+  assert.equal(Object.hasOwn((await state()).projectRules, workProject), false);
+  console.log("PASS: invalid rules are rejected without changing settings");
+
   const toggles = await Promise.all([
     client.invokePluginRpc("auto-pin", "autopin.toggle", {}),
     client.invokePluginRpc("auto-pin", "autopin.toggle", {}),
   ]);
   assert.deepEqual(toggles.map((item) => item.enabled).sort(), [false, true]);
   assert.equal((await state()).enabled, true);
+  await Promise.all([setRule(workProject, "always"), setRule(experimentsProject, "never")]);
+  const beforeReload = await state();
   await client.reloadPlugin("auto-pin");
-  assert.deepEqual(await state(), { running: true, enabled: true });
+  assert.deepEqual(await state(), beforeReload);
   await assertUnpinned(pinned);
   await assertPinned(await createWorkspace("after-plugin-reload"));
-  assert.deepEqual(JSON.parse(await readFile(join(home, "plugin-data", "auto-pin.json"), "utf8")), { enabled: true });
-  console.log("PASS: concurrent toggles serialize; reload preserves settings and re-registers the hook");
+  await assertPinned(await createWorktree(workProject, "always-after-reload"));
+  await assertUnpinned(await createWorktree(experimentsProject, "never-after-reload"));
+  const { running: _running, ...saved } = beforeReload;
+  assert.deepEqual(JSON.parse(await readFile(join(home, "plugin-data", "auto-pin.json"), "utf8")), saved);
+  console.log("PASS: concurrent saves serialize; reload preserves the default and project rules");
   console.log("Paseo 0.9.1 integration passed.");
+  if (keepUi) {
+    console.log(`Open http://${persisted.daemon.listen} to check the panel. Press Enter to stop.`);
+    process.stdin.resume();
+    await new Promise((resolve) => process.stdin.once("data", resolve));
+    process.stdin.pause();
+  }
 } finally {
   try { await client?.close(); }
   finally {

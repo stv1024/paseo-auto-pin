@@ -1,6 +1,6 @@
 {
   "id": "auto-pin",
-  "description": "Automatically pin newly created workspaces, with a sidebar switch and Command Center toggle.",
+  "description": "Automatically pin new workspaces. Follow a default or choose Always / Never for each project.",
   "requirements": { "paseo": ">=0.9.1 <0.10.0" },
   "build": [["npm", "ci", "--include=dev", "--ignore-scripts"]]
 }

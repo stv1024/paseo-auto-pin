@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PluginServerContext, PluginHookContext, PluginLifecycleEvents } from "@getpaseo/plugin/server";
 import { registerAutoPin, isRunning } from "../server/lifecycle";
-import { isEnabled } from "../server/store";
+import { shouldPinProject } from "../server/store";
 import { pinWorkspace } from "../server/pin";
 
-vi.mock("../server/store", () => ({ isEnabled: vi.fn(async () => true) }));
+vi.mock("../server/store", () => ({ shouldPinProject: vi.fn(async () => true) }));
 vi.mock("../server/pin", () => ({ pinWorkspace: vi.fn(async () => {}) }));
 afterEach(() => vi.clearAllMocks());
 
@@ -24,13 +24,14 @@ describe("workspace-created lifecycle", () => {
     const s = setup();
     expect(isRunning()).toBe(true);
     await s.fire();
+    expect(shouldPinProject).toHaveBeenCalledExactlyOnceWith("p");
     expect(pinWorkspace).toHaveBeenCalledExactlyOnceWith("new", s.controller.signal);
     s.cleanup();
     expect(isRunning()).toBe(false);
     expect(s.unsubscribe).toHaveBeenCalledOnce();
   });
-  it("respects the persisted disabled switch", async () => {
-    vi.mocked(isEnabled).mockResolvedValueOnce(false);
+  it("respects the project rule decision", async () => {
+    vi.mocked(shouldPinProject).mockResolvedValueOnce(false);
     const s = setup(); await s.fire(); s.cleanup();
     expect(pinWorkspace).not.toHaveBeenCalled();
   });
@@ -45,9 +46,9 @@ describe("workspace-created lifecycle", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const s = setup(); await expect(s.fire()).rejects.toThrow("offline"); s.cleanup(); log.mockRestore();
   });
-  it("does not pin when canceled while reading the switch", async () => {
+  it("does not pin when canceled while reading the rules", async () => {
     const s = setup();
-    vi.mocked(isEnabled).mockImplementationOnce(async () => {
+    vi.mocked(shouldPinProject).mockImplementationOnce(async () => {
       s.controller.abort();
       return true;
     });
