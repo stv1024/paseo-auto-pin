@@ -3,6 +3,13 @@
 Use the post below with the [demo GIF](demo.gif) or [original video](demo.mp4).
 The recording shows a newly created workspace appearing in **Pinned** automatically.
 
+## Published links
+
+- [Paseo Show and tell](https://github.com/getpaseo/paseo/discussions/5346)
+- [Auto-Pin 0.4.0 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.4.0)
+- [npm package](https://www.npmjs.com/package/paseo-auto-pin)
+- [paseo.cafe submission](https://github.com/paseo-cafe/paseo-cafe/issues/228)
+
 ## Community post
 
 **Auto-Pin for Paseo: keep new workspaces at the top, with rules for each project**
@@ -20,7 +27,7 @@ created workspaces, including worktrees. Existing pins stay as they are.
 Install:
 
 ```bash
-paseo plugin install https://github.com/stv1024/paseo-auto-pin
+paseo plugin install npm:paseo-auto-pin@0.4.0
 ```
 
 Requires Paseo 0.9.1–0.9.x.

@@ -84,6 +84,8 @@ sharing them.
 Have a workflow this does not cover? Describe it in an issue. A concrete example
 helps decide what to build next.
 
+[Share your workflow in the Paseo community discussion](https://github.com/getpaseo/paseo/discussions/5346).
+
 [What's changed](CHANGELOG.md) · [Development](docs/development.md) · [Community post and demo guide](docs/community.md)
 
 ## License
