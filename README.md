@@ -5,9 +5,20 @@ Automatically pin new [Paseo](https://paseo.sh) workspaces, with exceptions for 
 Keep everyday work near the top of your sidebar and leave experiments unpinned.
 Auto-Pin runs in the background, even when its panel is closed.
 
+![A newly created workspace automatically appears in the Pinned section of the Paseo sidebar.](docs/demo.gif)
+
+Create a workspace. Auto-Pin moves it into **Pinned** automatically.
+[Watch the original video](docs/demo.mp4).
+
 ## Install
 
 Requires **Paseo 0.9.1–0.9.x** and Node.js/npm on the machine running the Paseo daemon.
+
+```bash
+paseo plugin install npm:paseo-auto-pin@0.4.0
+```
+
+Or install from GitHub:
 
 ```bash
 paseo plugin install https://github.com/stv1024/paseo-auto-pin
@@ -47,7 +58,7 @@ In the Command Center, use **Auto-Pin: Toggle Default** for a quick change, or
 
 ## Update
 
-For an installation from Git:
+For an installation from npm or Git:
 
 ```bash
 paseo plugin update auto-pin --check

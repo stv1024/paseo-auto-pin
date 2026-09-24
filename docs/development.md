@@ -16,6 +16,34 @@ paseo plugin logs auto-pin
 
 Git installations and updates run the manifest's `npm ci` build step before
 Paseo compiles the plugin. Local-directory installations use `reload` after edits.
+Managed npm installations install production dependencies automatically and use
+a published manifest without the Git-only build step.
+
+## Publishing on npm
+
+Run the checks, then prepare a tarball:
+
+```bash
+npm run typecheck
+npm test
+npm run pack:npm
+```
+
+The command prints the tarball path, integrity, and included files. It stages a
+package in a fresh temporary directory, removes `private` and development scripts,
+and omits only the known Git dependency-install command from the staged manifest.
+The source repository stays private to npm to prevent accidental direct publishing.
+
+Install the printed tarball into a separate test directory with
+`npm install --prefix /path/to/package-test --ignore-scripts --omit=dev --legacy-peer-deps /path/to/paseo-auto-pin-VERSION.tgz`.
+Verify that installed artifact using
+`npm run test:integration -- --runtime /path/to/paseo-test-runtime --plugin-directory /path/to/package-test/node_modules/paseo-auto-pin`.
+
+Publish that same verified tarball with
+`npm publish /path/to/paseo-auto-pin-VERSION.tgz --access public --registry=https://registry.npmjs.org/`,
+then run the integration check with `--source npm:paseo-auto-pin@VERSION` to verify
+managed npm acquisition. Keep the GitHub and npm package versions in sync, and
+increment the version before each subsequent publication.
 
 ## How it works
 

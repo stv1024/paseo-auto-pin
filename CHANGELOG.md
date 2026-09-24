@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 — Unreleased
+## 0.4.0 — 2026-09-24
 
 - Choose **Follow default**, **Always**, or **Never** for each project. Project
   rules apply to new workspaces, including worktrees, and override the default switch.
@@ -12,6 +12,8 @@
   refresh responses from replacing a newer selection.
 - Rewrite the README for users; add a development guide, community post, and GIF
   recording guide.
+- Publish on npm with a dedicated package preparation command; keep the Git
+  dependency-install step out of the npm artifact.
 
 Existing pins and archive restoration behave as before. This release does not
 automatically unpin workspaces. Requires Paseo 0.9.1–0.9.x.

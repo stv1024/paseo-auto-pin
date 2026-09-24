@@ -1,7 +1,7 @@
 # Sharing Auto-Pin
 
-Use the post below once 0.4.0 is available from the repository's default branch.
-Add your recording if you have one; the text also works without it.
+Use the post below with the [demo GIF](demo.gif) or [original video](demo.mp4).
+The recording shows a newly created workspace appearing in **Pinned** automatically.
 
 ## Community post
 
@@ -48,15 +48,17 @@ Keep the sidebar and the action in frame, enlarge text if needed, and hide
 personal paths or unrelated conversations before recording. You do not need to
 show installation, logs, or every setting.
 
-Save the finished recording as `docs/demo.gif`. Add this immediately after the
-opening description in the README:
+The README currently uses `docs/demo.gif`, made from the September 24 recording.
+It demonstrates automatic pinning; the longer project-rule sequence above is an
+option for a future recording.
 
-```markdown
-![Auto-Pin pins a new Everyday workspace and leaves an Experiments workspace unpinned.](docs/demo.gif)
-```
+The GIF is cropped to the top-left 1280 × 850 area, resized to 960 × 638, and
+encoded at 12 fps with a shared palette. Playback is slowed to 1.4 times the
+original duration, with a 1.2-second hold on the final frame before looping.
+It is about 227 KiB. The unmodified 3.2-second MP4 is kept as `docs/demo.mp4`.
 
-Keep the GIF a few megabytes if possible. A static screenshot with a link to a
-short video is also fine.
+Keep future GIFs a few megabytes if possible. A static screenshot with a link
+to a short video is also fine.
 
 ## After posting
 

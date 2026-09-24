@@ -28,6 +28,12 @@ if (sourceIndex >= 0 && !process.argv[sourceIndex + 1]) {
   throw new Error("--source requires a Git or npm plugin source");
 }
 const source = sourceIndex >= 0 ? process.argv[sourceIndex + 1] : undefined;
+const directoryIndex = process.argv.indexOf("--plugin-directory");
+if (directoryIndex >= 0 && !process.argv[directoryIndex + 1]) {
+  throw new Error("--plugin-directory requires an installed plugin directory");
+}
+assert.ok(!(source && directoryIndex >= 0), "Use --source or --plugin-directory, not both");
+const pluginDirectory = directoryIndex >= 0 ? resolve(process.argv[directoryIndex + 1]) : pluginRoot;
 const keepUi = process.argv.includes("--ui");
 const testRoot = await mkdtemp(join(tmpdir(), "paseo-auto-pin-integration-"));
 const home = join(testRoot, "home");
@@ -115,7 +121,7 @@ try {
 
   const existing = await createWorkspace("existing-before-install");
   if (source) await client.installPluginSource({ source });
-  else await client.installDirectoryPlugin(pluginRoot);
+  else await client.installDirectoryPlugin(pluginDirectory);
   const catalog = await client.getPluginCatalog();
   assert.ok(catalog.find((item) => item.id === "auto-pin")?.clientBundle, "client bundle must be available");
   assert.deepEqual(await state(), { running: true, enabled: false, projectRules: {}, revision: 0 });
