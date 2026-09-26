@@ -100,6 +100,11 @@ the plugin, then reopen the panel. Prefer the panel for normal changes.
 
 ### Paseo integration limits
 
+Paseo 0.9.2 can display an old creation snapshot after the live pin update.
+See [the known issue, upstream status, and maintenance policy](paseo-workspace-race.md).
+Host state synchronization fixes belong upstream. Keep the plugin's creation
+hook independent of response timing and preserve manual unpinning.
+
 Paseo 0.9.1's public `PaseoApi` has no pin mutation. The pin adapter uses
 `DaemonClient` from `@getpaseo/client/internal/daemon-client` over a short-lived
 connection to the local daemon. This is the only internal SDK integration.

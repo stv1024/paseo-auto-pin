@@ -13,6 +13,8 @@ Create a workspace. Auto-Pin moves it into **Pinned** automatically.
 ## Install
 
 Requires **Paseo 0.9.1–0.9.x** and Node.js/npm on the machine running the Paseo daemon.
+Paseo 0.9.2 has a [known sidebar synchronization issue](docs/paseo-workspace-race.md)
+that can temporarily hide a newly applied pin.
 
 ```bash
 paseo plugin install npm:paseo-auto-pin@0.4.0
@@ -75,6 +77,12 @@ For Paseo 0.8, use Auto-Pin 0.2.0; for Paseo 0.7, use 0.1.0.
 
 If a new workspace is not pinned, check its project rule and the default switch.
 If you just changed a setting on another device, press **Refresh** in the panel.
+
+If a workspace appears pinned, disappears from Pinned, and returns later on
+Paseo 0.9.2, see the [known issue and upstream status](docs/paseo-workspace-race.md).
+The daemon retains the pin; updating or reloading Auto-Pin does not fix this
+host issue. The panel's **Refresh** button only refreshes plugin settings and
+projects, so it does not repair the sidebar state.
 
 For errors or unexpected behavior, [open an issue](https://github.com/stv1024/paseo-auto-pin/issues).
 Include your Paseo and Auto-Pin versions, the rule you selected, and what happened.

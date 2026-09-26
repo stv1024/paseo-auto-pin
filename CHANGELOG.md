@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Document the Paseo 0.9.2 creation-response race that can temporarily hide new
+  pins, with an isolated reproduction and a candidate host patch for upstream
+  review. Plugin behavior and supported version requirements are unchanged.
+
 ## 0.4.0 — 2026-09-24
 
 - Choose **Follow default**, **Always**, or **Never** for each project. Project
