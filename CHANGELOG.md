@@ -4,7 +4,9 @@
 
 - Document the Paseo 0.9.2 creation-response race that can temporarily hide new
   pins, with an isolated reproduction and a candidate host patch for upstream
-  review. Plugin behavior and supported version requirements are unchanged.
+  review. Reported upstream as
+  [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447).
+  Plugin behavior and supported version requirements are unchanged.
 
 ## 0.4.0 — 2026-09-24
 

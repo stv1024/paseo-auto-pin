@@ -83,6 +83,7 @@ Paseo 0.9.2, see the [known issue and upstream status](docs/paseo-workspace-race
 The daemon retains the pin; updating or reloading Auto-Pin does not fix this
 host issue. The panel's **Refresh** button only refreshes plugin settings and
 projects, so it does not repair the sidebar state.
+Upstream tracking: [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447).
 
 For errors or unexpected behavior, [open an issue](https://github.com/stv1024/paseo-auto-pin/issues).
 Include your Paseo and Auto-Pin versions, the rule you selected, and what happened.

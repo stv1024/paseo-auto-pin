@@ -6,6 +6,10 @@ The daemon's saved pin is not removed.
 
 ## Status and user impact
 
+Upstream report: [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447),
+filed September 26, 2026 with the reproduction script, raw output, and candidate
+patch. Filing the report does not imply that the fix has been accepted or released.
+
 Confirmed with Auto-Pin **0.4.0** and Paseo **0.9.2** on Windows 11. Paseo 0.9.2
 was still the latest stable release when checked on September 26, 2026.
 No fixed official release has been verified. Other versions have not been
