@@ -1,6 +1,9 @@
 # Sharing Auto-Pin
 
-Use the post below with the [demo GIF](demo.gif) or [original video](demo.mp4).
+Use the post below with the [demo GIF](demo.gif), [original video](demo.mp4), or
+the 17-second [promo video](../promo/auto-pin-promo.mp4). The promo is generated from
+`promo/promo.html`; run `node promo/render.mjs` with `playwright-core` and
+`ffmpeg-static` available (set `PROMO_TOOLS` to their directory) to render it again.
 The recording shows a newly created workspace appearing in **Pinned** automatically.
 
 ## Published links

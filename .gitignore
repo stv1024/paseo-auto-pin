@@ -4,3 +4,7 @@ node_modules/
 
 # Personal Paseo workspace preferences (not the plugin manifest).
 /paseo.json
+
+# Promo render intermediates.
+/promo/soundtrack.wav
+/promo/still-*.png

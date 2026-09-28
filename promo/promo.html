@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Auto-Pin for Paseo — promo</title>
+<style>
+  :root {
+    --bg: #09090b; --surface0: #141416; --surface1: #1b1b1f; --surface2: #26262c;
+    --border: #2c2c33; --fg: #ededf0; --muted: #8b8b95;
+    --accent: #8f7cff; --accent2: #43d6c2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  body { font-family: "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: var(--fg);
+    -webkit-font-smoothing: antialiased; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  .abs { position: absolute; }
+  .layer { position: absolute; inset: 0; }
+
+  /* Background */
+  .blob { position: absolute; width: 1400px; height: 1400px; border-radius: 50%; filter: blur(40px); }
+  #blobA { background: radial-gradient(circle, rgba(143,124,255,.30), rgba(143,124,255,0) 62%); }
+  #blobB { background: radial-gradient(circle, rgba(67,214,194,.18), rgba(67,214,194,0) 62%); }
+  #grid { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 10%, transparent 70%); }
+  #grain { opacity: .07; mix-blend-mode: overlay; }
+  #vignette { background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.65) 100%); }
+
+  /* Kinetic type */
+  .headline { position: absolute; left: 0; right: 0; text-align: center; font-weight: 650;
+    letter-spacing: -0.035em; font-size: 104px; line-height: 1.05; }
+  .headline .w { display: inline-block; margin: 0 .13em; will-change: transform, filter, opacity; }
+  .grad { background: linear-gradient(100deg, #fff 10%, #c9c0ff 45%, var(--accent2) 95%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* App window */
+  #win { left: 130px; top: 170px; width: 1060px; height: 740px; border-radius: 18px;
+    background: var(--surface0); border: 1px solid var(--border); overflow: hidden;
+    box-shadow: 0 60px 140px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03) inset; transform-origin: 30% 40%; }
+  #win .titlebar { height: 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #3a3a42; }
+  #sidebar { position: absolute; left: 0; top: 40px; bottom: 0; width: 330px; border-right: 1px solid var(--border); background: #111113; }
+  .nav { position: absolute; left: 14px; right: 14px; height: 38px; border-radius: 9px; display: flex; align-items: center;
+    gap: 12px; padding: 0 12px; font-size: 17px; color: #c9c9d0; }
+  .nav svg { width: 18px; height: 18px; stroke: #9a9aa4; }
+  .sechead { position: absolute; left: 26px; font-size: 14px; color: var(--muted); letter-spacing: .02em; }
+  .row { position: absolute; left: 14px; right: 14px; height: 40px; border-radius: 10px; display: flex; align-items: center;
+    gap: 12px; padding: 0 12px; font-size: 17px; color: #dcdce2; }
+  .ws-ico { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; }
+  .row .meta { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pinbadge { margin-left: auto; width: 22px; height: 22px; display: grid; place-items: center; }
+  .pinbadge svg { width: 16px; height: 16px; stroke: var(--accent); }
+  #main { position: absolute; left: 330px; top: 40px; right: 0; bottom: 0; }
+  .bubble { position: absolute; right: 56px; top: 56px; padding: 14px 20px; border-radius: 16px; background: var(--surface2); font-size: 17px; }
+  .line { position: absolute; left: 64px; height: 12px; border-radius: 6px; background: #232329; }
+
+  /* Captions */
+  .cap { position: absolute; font-weight: 650; letter-spacing: -0.03em; }
+  .cap .k { font-size: 20px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 22px; }
+  .cap .t { font-size: 76px; line-height: 1.04; }
+  .cap .s { margin-top: 26px; font-size: 26px; color: var(--muted); font-weight: 450; letter-spacing: -0.01em; line-height: 1.4; }
+
+  /* Panel */
+  #panel { left: 890px; top: 150px; width: 900px; border-radius: 22px; background: var(--surface0); border: 1px solid var(--border);
+    padding: 40px 44px; box-shadow: 0 60px 140px rgba(0,0,0,.7); }
+  .p-title { display: flex; align-items: center; gap: 14px; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+  .p-title svg { width: 30px; height: 30px; stroke: var(--accent); }
+  .p-desc { margin-top: 10px; color: var(--muted); font-size: 18px; }
+  .card { margin-top: 26px; border-radius: 16px; background: var(--surface1); border: 1px solid var(--border); padding: 22px 24px;
+    display: flex; align-items: center; }
+  .card .l1 { font-size: 20px; font-weight: 600; }
+  .card .l2 { font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .switch { margin-left: auto; width: 64px; height: 36px; border-radius: 18px; border: 1px solid var(--border); position: relative; }
+  .thumb { position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 50%; }
+  .onoff { margin-left: auto; margin-right: 16px; font-size: 18px; font-weight: 600; width: 36px; text-align: right; }
+  .p-sec { margin-top: 30px; font-size: 22px; font-weight: 650; display: flex; align-items: center; }
+  .p-sec .search { margin-left: auto; width: 300px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface1);
+    font-size: 15px; color: var(--muted); display: flex; align-items: center; padding: 0 14px; font-weight: 400; }
+  .proj { margin-top: 12px; border-radius: 14px; background: var(--surface1); border: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; }
+  .proj .n { font-size: 19px; font-weight: 600; }
+  .proj .pth { font-size: 14px; color: var(--muted); margin-top: 3px; font-family: "Cascadia Code", Consolas, monospace; }
+  .seg { margin-left: auto; position: relative; display: flex; border-radius: 11px; background: var(--surface0); border: 1px solid var(--border); padding: 4px; }
+  .seg .o { position: relative; z-index: 1; padding: 8px 16px; font-size: 15px; color: var(--muted); font-weight: 550; white-space: nowrap; }
+  .seg .pill { position: absolute; top: 4px; bottom: 4px; border-radius: 8px; z-index: 0; }
+
+  /* Features */
+  .feat { position: absolute; left: 50%; width: 1180px; margin-left: -590px; height: 150px; border-radius: 26px;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 36px; padding: 0 48px; backdrop-filter: blur(6px); }
+  .feat .ic { width: 84px; height: 84px; border-radius: 22px; display: grid; place-items: center;
+    background: linear-gradient(140deg, rgba(143,124,255,.35), rgba(67,214,194,.18)); border: 1px solid rgba(255,255,255,.12); }
+  .feat .ic svg { width: 42px; height: 42px; stroke: #fff; }
+  .feat .ft { font-size: 52px; font-weight: 650; letter-spacing: -0.03em; }
+  .feat .fs { font-size: 22px; color: var(--muted); margin-top: 6px; }
+
+  /* End card */
+  #logo { left: 50%; top: 250px; width: 200px; height: 200px; margin-left: -100px; border-radius: 52px; display: grid; place-items: center;
+    background: linear-gradient(145deg, #9d8cff, #5b47e0 55%, #2b9f93); box-shadow: 0 30px 120px rgba(143,124,255,.55), 0 0 0 1px rgba(255,255,255,.2) inset; }
+  #logo svg { width: 108px; height: 108px; stroke: #fff; stroke-width: 1.8; }
+  #word { top: 500px; font-size: 128px; }
+  #sub { top: 650px; left: 0; right: 0; text-align: center; font-size: 34px; color: var(--muted); letter-spacing: -0.01em; }
+  #cmd { top: 760px; left: 50%; transform: translateX(-50%); height: 72px; border-radius: 18px; padding: 0 30px; display: flex; align-items: center; gap: 16px;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); font-family: "Cascadia Code", Consolas, monospace; font-size: 28px; white-space: pre; }
+  #cmd .pr { color: var(--accent2); }
+  #caret { display: inline-block; width: 14px; height: 32px; background: var(--fg); vertical-align: middle; }
+  #url { top: 880px; left: 0; right: 0; text-align: center; font-size: 22px; color: #6d6d78; letter-spacing: .02em; }
+
+  #cursor { width: 34px; height: 34px; z-index: 50; filter: drop-shadow(0 4px 10px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 2px solid var(--accent); z-index: 49; }
+  #flash { background: #fff; mix-blend-mode: overlay; }
+  #fade { background: #000; z-index: 100; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="bg">
+    <div class="blob" id="blobA"></div>
+    <div class="blob" id="blobB"></div>
+    <div class="layer" id="grid"></div>
+  </div>
+
+  <!-- Scene 1 -->
+  <div class="headline" id="h1" style="top:430px">New workspaces pile up.</div>
+  <div class="headline" id="h2" style="top:430px">Let them <span class="grad">pin themselves.</span></div>
+
+  <!-- Scene 2 -->
+  <div class="abs" id="win">
+    <div class="titlebar"><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div style="margin-left:18px;font-size:14px;color:var(--muted)">Paseo</div></div>
+    <div id="sidebar"></div>
+    <div id="main">
+      <div class="bubble">Review this project!</div>
+      <div class="line" style="top:150px;width:520px"></div>
+      <div class="line" style="top:180px;width:430px"></div>
+      <div class="line" style="top:210px;width:480px"></div>
+      <div class="line" style="top:270px;width:360px;background:#1d1d22"></div>
+    </div>
+  </div>
+  <div class="cap" id="cap2a" style="left:1290px;top:380px">
+    <div class="k">Automatic</div>
+    <div class="t">Create a<br>workspace.</div>
+  </div>
+  <div class="cap" id="cap2b" style="left:1290px;top:380px">
+    <div class="k">Instant</div>
+    <div class="t">It lands in<br><span class="grad">Pinned.</span></div>
+    <div class="s">No dragging. No clicking.<br>Auto-Pin does it for you.</div>
+  </div>
+
+  <!-- Scene 3 -->
+  <div class="abs" id="panel">
+    <div class="p-title"><svg id="pinA" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>Auto-Pin</div>
+    <div class="p-desc">Keep new workspaces within reach. Choose a default, then make exceptions.</div>
+    <div class="card">
+      <div><div class="l1">Pin new workspaces by default</div><div class="l2" id="swHint">Off for projects without an override.</div></div>
+      <div class="onoff" id="onoff">Off</div>
+      <div class="switch" id="sw" style="margin-left:0"><div class="thumb" id="thumb"></div></div>
+    </div>
+    <div class="p-sec">Projects<div class="search">Search projects</div></div>
+    <div id="projs"></div>
+  </div>
+  <div class="cap" id="cap3a" style="left:130px;top:360px">
+    <div class="k">Your defaults</div>
+    <div class="t">Set it once.</div>
+  </div>
+  <div class="cap" id="cap3b" style="left:130px;top:360px">
+    <div class="k">Your rules</div>
+    <div class="t">Tune every<br><span class="grad">project.</span></div>
+    <div class="s">Always. Never.<br>Or follow the default.</div>
+  </div>
+
+  <!-- Scene 4 -->
+  <div id="feats"></div>
+
+  <!-- Scene 5 -->
+  <div class="abs" id="logo"><svg id="pinL" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"></svg></div>
+  <div class="headline" id="word"><span class="grad">Auto-Pin</span></div>
+  <div class="abs" id="sub">for Paseo</div>
+  <div class="abs" id="cmd"><span class="pr">$</span><span id="cmdtxt"></span><span id="caret"></span></div>
+  <div class="abs" id="url">github.com/stv1024/paseo-auto-pin</div>
+
+  <svg class="abs" id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15.5 9.2-6.9 1.4 3.9 7.6-2.8 1.4-3.9-7.6L4.8 19z" fill="#fff" stroke="#111" stroke-width="1.2" stroke-linejoin="round"/></svg>
+  <div id="ripples"></div>
+
+  <svg class="layer" id="grain" width="1920" height="1080"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>
+  <div class="layer" id="vignette"></div>
+  <div class="layer" id="flash"></div>
+  <div class="layer" id="fade"></div>
+</div>
+
+<script>
+const PIN = '<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>';
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  pin: PIN,
+  bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  branch: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 7v10M18 9c0 5-6 4-12 8"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+};
+const svg = (k, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[k]}</svg>`;
+const $ = (id) => document.getElementById(id);
+
+// ---------- math ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const P = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = (k) => 1 - Math.pow(1 - k, 3);
+const eOut5 = (k) => 1 - Math.pow(1 - k, 5);
+const eIO = (k) => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const eBack = (k) => { const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+// in/out envelope: fades in over [a, a+i], out over [b-o, b]
+const env = (t, a, b, i = .4, o = .4) => Math.min(eOut(P(t, a, a + i)), 1 - eIO(P(t, b - o, b)));
+const style = (el, o) => Object.assign(el.style, o);
+function mixHex(a, b, k) {
+  const pa = a.match(/\w\w/g).map((h) => parseInt(h, 16)), pb = b.match(/\w\w/g).map((h) => parseInt(h, 16));
+  return `rgb(${pa.map((v, i) => Math.round(lerp(v, pb[i], k))).join(',')})`;
+}
+
+// ---------- build ----------
+function splitWords(el) {
+  const walk = (node) => {
+    [...node.childNodes].forEach((c) => {
+      if (c.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        c.textContent.split(/\s+/).filter(Boolean).forEach((w) => {
+          const s = document.createElement('span'); s.className = 'w'; s.textContent = w; frag.appendChild(s);
+        });
+        c.replaceWith(frag);
+      } else if (c.classList.contains('grad')) {
+        const words = c.textContent.split(/\s+/).filter(Boolean);
+        const frag = document.createDocumentFragment();
+        words.forEach((w) => { const s = document.createElement('span'); s.className = 'w grad'; s.textContent = w; frag.appendChild(s); });
+        c.replaceWith(frag);
+      }
+    });
+  };
+  walk(el);
+  return [...el.querySelectorAll('.w')];
+}
+const W1 = splitWords($('h1')), W2 = splitWords($('h2'));
+$('pinA').innerHTML = PIN; $('pinL').innerHTML = PIN;
+
+// sidebar
+const SB = $('sidebar');
+const NAV = [['plus', 'New workspace'], ['history', 'History'], ['search', 'Search'], ['cal', 'Schedules'], ['pin', 'Auto-Pin']];
+NAV.forEach(([ic, label], i) => {
+  const d = document.createElement('div'); d.className = 'nav'; d.style.top = (16 + i * 42) + 'px';
+  d.innerHTML = svg(ic) + label; if (i === 0) d.id = 'navNew'; SB.appendChild(d);
+});
+const mk = (html, cls = 'row') => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; SB.appendChild(d); return d; };
+const hPinned = mk('Pinned', 'sechead'); hPinned.style.top = '248px';
+const hWs = mk('Workspaces', 'sechead');
+const wsRow = (name, color, meta) => mk(`<div class="ws-ico" style="background:${color}">${name[0].toUpperCase()}</div><span>${name}</span><span class="meta">${meta}</span>`);
+const rApi = wsRow('api-server', '#6d5ce8', '+12 −3');
+rApi.querySelector('.meta').outerHTML = `<div class="pinbadge">${svg('pin')}</div>`;
+const rNew = wsRow('fix-login-bug', '#1fae9b', '');
+rNew.querySelector('.meta').outerHTML = `<div class="pinbadge" id="newBadge">${svg('pin')}</div>`;
+const rA = wsRow('landing-page', '#c25a8a', '2h');
+const rB = wsRow('experiments', '#b98a2e', '1d');
+
+// panel projects
+const PROJ = [
+  ['paseo-auto-pin', '~/code/paseo-auto-pin', 0, 1],
+  ['experiments', '~/sandbox/experiments', 0, 2],
+  ['landing-page', '~/code/landing-page', 0, 0],
+  ['api-server', '~/code/api-server', 0, 1],
+];
+const projEls = PROJ.map(([n, p]) => {
+  const d = document.createElement('div'); d.className = 'proj';
+  d.innerHTML = `<div><div class="n">${n}</div><div class="pth">${p}</div></div>
+    <div class="seg"><div class="pill"></div><div class="o">Follow default</div><div class="o">Always</div><div class="o">Never</div></div>`;
+  $('projs').appendChild(d); return d;
+});
+
+// features
+const FEATS = [
+  ['bolt', 'Runs in the background', 'Even when the panel is closed.'],
+  ['branch', 'Covers every worktree', 'Rules follow the project, wherever it lives.'],
+  ['shield', 'Never removes a pin', 'Your manual pins stay exactly where you put them.'],
+];
+const featEls = FEATS.map(([ic, t, s], i) => {
+  const d = document.createElement('div'); d.className = 'feat'; d.style.top = (250 + i * 200) + 'px';
+  d.innerHTML = `<div class="ic">${svg(ic)}</div><div><div class="ft">${t}</div><div class="fs">${s}</div></div>`;
+  $('feats').appendChild(d); return d;
+});
+
+const CMD = ' paseo plugin install npm:paseo-auto-pin';
+
+// ---------- layout probes (taken before any transforms) ----------
+const center = (el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+const winR = $('win').getBoundingClientRect();
+const NEWBTN = [winR.left + 14 + 70, winR.top + 40 + 16 + 19];
+const segOpts = projEls.map((p) => [...p.querySelectorAll('.seg .o')]);
+const optC = (row, i) => center(segOpts[row][i]);
+const SWC = center($('sw'));
+
+// ---------- timeline ----------
+const T_END = 17;
+// cursor path: [time, x, y]
+const CUR = [
+  [2.6, 1500, 1000], [3.35, NEWBTN[0], NEWBTN[1]], [4.4, NEWBTN[0] + 10, NEWBTN[1] + 4],
+  [5.4, NEWBTN[0] + 260, NEWBTN[1] + 360], [7.0, 1400, 900],
+  [7.75, SWC[0], SWC[1]], [8.4, SWC[0] - 40, SWC[1] + 60],
+  [8.75, ...optC(0, 1)], [9.25, ...optC(1, 2)], [9.8, ...optC(3, 1)], [11.0, 1700, 1000],
+];
+const CLICKS = [3.5, 7.85, 8.85, 9.35, 9.9];
+// rule change times: [row, from, to, time]
+const RULECHG = [[0, 0, 1, 8.85], [1, 0, 2, 9.35], [3, 0, 1, 9.9]];
+
+const ripEls = CLICKS.map(() => { const r = document.createElement('div'); r.className = 'ripple'; $('ripples').appendChild(r); return r; });
+
+function cursorAt(t) {
+  if (t <= CUR[0][0]) return CUR[0].slice(1);
+  for (let i = 0; i < CUR.length - 1; i++) {
+    const [ta, xa, ya] = CUR[i], [tb, xb, yb] = CUR[i + 1];
+    if (t <= tb) { const k = eIO(P(t, ta, tb)); return [lerp(xa, xb, k), lerp(ya, yb, k)]; }
+  }
+  return CUR[CUR.length - 1].slice(1);
+}
+
+function words(ws, t, start, step, end) {
+  ws.forEach((w, i) => {
+    const a = start + i * step;
+    const k = eOut5(P(t, a, a + .55));
+    const out = eIO(P(t, end - .35 + i * .03, end + i * .03));
+    style(w, {
+      opacity: k * (1 - out),
+      transform: `translateY(${(1 - k) * 60 - out * 40}px) scale(${lerp(1.15, 1, k)})`,
+      filter: `blur(${(1 - k) * 18 + out * 14}px)`,
+    });
+  });
+}
+
+function render(t) {
+  // background drift
+  style($('blobA'), { left: (lerp(-300, 400, t / T_END) + Math.sin(t * .6) * 80) + 'px', top: (-500 + Math.cos(t * .5) * 90) + 'px' });
+  style($('blobB'), { left: (lerp(1100, 700, t / T_END) + Math.cos(t * .7) * 90) + 'px', top: (200 + Math.sin(t * .4) * 120) + 'px' });
+  style($('grid'), { transform: `translateY(${-t * 12}px) scale(${1 + t * .004})`, opacity: .9 });
+
+  // ---- Scene 1 (0 – 2.5)
+  words(W1, t, .15, .09, 1.35);
+  words(W2, t, 1.35, .1, 2.55);
+  $('h1').style.display = t < 1.8 ? '' : 'none';
+  $('h2').style.display = t > 1.2 && t < 2.8 ? '' : 'none';
+
+  // ---- Scene 2 (2.4 – 7.1)
+  const wIn = eOut5(P(t, 2.4, 3.2)), wOut = eIO(P(t, 6.6, 7.1));
+  const zoom = eIO(P(t, 4.0, 4.7)) * (1 - eIO(P(t, 6.0, 6.7)));
+  style($('win'), {
+    opacity: wIn * (1 - wOut),
+    transform: `perspective(1800px) translate(${(1 - wIn) * -80 - wOut * 120}px, ${(1 - wIn) * 90}px) rotateY(${(1 - wIn) * 14 - wOut * 8}deg) rotateX(${(1 - wIn) * 8}deg) scale(${lerp(.92, 1, wIn) + zoom * .12})`,
+    filter: `blur(${wOut * 10}px)`,
+  });
+  const created = eBack(P(t, 3.65, 4.15));      // new row appears in Workspaces
+  const move = eIO(P(t, 4.75, 5.45));            // flies into Pinned
+  const lift = Math.sin(Math.PI * P(t, 4.6, 5.6));
+  const Y0 = 278;
+  style(rApi, { top: lerp(Y0, Y0 + 46, move) + 'px' });
+  const hWsY = lerp(Y0 + 46 + 18, Y0 + 92 + 18, move);
+  style(hWs, { top: hWsY + 'px' });
+  const wsTop = Y0 + 64 + 30;                    // first row under Workspaces (before move)
+  const slotNew = lerp(wsTop, Y0, move);
+  const push = created * (1 - move);
+  style(rA, { top: (wsTop + 46 * push + 46 * move) + 'px' });
+  style(rB, { top: (wsTop + 46 + 46 * push + 46 * move) + 'px' });
+  style(rNew, {
+    top: slotNew + 'px', opacity: clamp(created * 1.4),
+    transform: `translateX(${(1 - clamp(created)) * -30 + lift * 18}px) scale(${lerp(.9, 1, clamp(created)) + lift * .06})`,
+    background: `rgba(143,124,255,${.08 + lift * .22 + .1 * (1 - P(t, 5.6, 6.6))})`,
+    boxShadow: `0 ${lift * 18}px ${lift * 50}px rgba(143,124,255,${lift * .45}), 0 0 0 1px rgba(143,124,255,${.15 + lift * .5})`,
+    zIndex: 5,
+  });
+  const badge = eBack(P(t, 5.35, 5.7));
+  style($('newBadge'), { opacity: clamp(badge), transform: `scale(${badge}) rotate(${(1 - badge) * -40}deg)` });
+  style($('navNew'), { background: `rgba(255,255,255,${.08 * Math.sin(Math.PI * P(t, 3.3, 3.9))})` });
+  // captions
+  const c2a = env(t, 2.9, 4.8, .5, .35), c2b = env(t, 4.9, 6.9, .55, .4);
+  style($('cap2a'), { opacity: c2a, transform: `translateY(${(1 - c2a) * 40}px)`, filter: `blur(${(1 - c2a) * 12}px)` });
+  style($('cap2b'), { opacity: c2b, transform: `translateY(${(1 - c2b) * 40}px)`, filter: `blur(${(1 - c2b) * 12}px)` });
+
+  // ---- Scene 3 (6.9 – 11.4)
+  const pIn = eOut5(P(t, 6.9, 7.6)), pOut = eIO(P(t, 10.9, 11.4));
+  style($('panel'), {
+    opacity: pIn * (1 - pOut),
+    transform: `perspective(1800px) translate(${(1 - pIn) * 120}px, ${(1 - pIn) * 40 - pOut * 30}px) rotateY(${(1 - pIn) * -14}deg) scale(${lerp(.93, 1, pIn) - pOut * .05})`,
+    filter: `blur(${pOut * 10}px)`,
+  });
+  projEls.forEach((el, i) => {
+    const k = eOut5(P(t, 7.2 + i * .08, 7.8 + i * .08));
+    style(el, { opacity: k, transform: `translateY(${(1 - k) * 24}px)` });
+  });
+  const on = eIO(P(t, 7.85, 8.1));
+  style($('sw'), { background: mixHex('26262c', '8f7cff', on), borderColor: mixHex('2c2c33', '8f7cff', on) });
+  style($('thumb'), { transform: `translateX(${on * 28}px)`, background: mixHex('8b8b95', 'ffffff', on) });
+  $('onoff').textContent = on > .5 ? 'On' : 'Off';
+  $('swHint').textContent = on > .5 ? 'On for projects without an override.' : 'Off for projects without an override.';
+  projEls.forEach((el, row) => {
+    const pill = el.querySelector('.pill');
+    const chg = RULECHG.find((r) => r[0] === row);
+    const k = chg ? eBack(P(t, chg[3], chg[3] + .35)) : 0;
+    const from = segOpts[row][chg ? chg[1] : 0], to = segOpts[row][chg ? chg[2] : 0];
+    const target = chg ? chg[2] : 0;
+    const colors = ['#3a3a44', '#8f7cff', '#e0667a'];
+    style(pill, {
+      left: lerp(from.offsetLeft, to.offsetLeft, k) + 'px', width: lerp(from.offsetWidth, to.offsetWidth, clamp(k)) + 'px',
+      background: chg ? mixHex('3a3a44', colors[target].slice(1), clamp(k)) : colors[0],
+      boxShadow: chg ? `0 0 ${clamp(k) * 24}px ${colors[target]}66` : 'none',
+    });
+    segOpts[row].forEach((o, i) => { o.style.color = i === (clamp(k) > .5 ? target : (chg ? chg[1] : 0)) ? '#fff' : '#8b8b95'; });
+  });
+  const c3a = env(t, 7.2, 8.55, .5, .3), c3b = env(t, 8.6, 10.95, .5, .4);
+  style($('cap3a'), { opacity: c3a, transform: `translateY(${(1 - c3a) * 40}px)`, filter: `blur(${(1 - c3a) * 12}px)` });
+  style($('cap3b'), { opacity: c3b, transform: `translateY(${(1 - c3b) * 40}px)`, filter: `blur(${(1 - c3b) * 12}px)` });
+
+  // ---- Scene 4 (11.3 – 14.0)
+  featEls.forEach((el, i) => {
+    const a = 11.35 + i * .32;
+    const k = eOut5(P(t, a, a + .6)), out = eIO(P(t, 13.55 + i * .06, 14.0 + i * .06));
+    style(el, {
+      opacity: k * (1 - out),
+      transform: `perspective(1400px) translate(${(1 - k) * 160}px, ${-out * 50}px) rotateY(${(1 - k) * -22}deg) scale(${1 - out * .04})`,
+      filter: `blur(${(1 - k) * 14 + out * 12}px)`,
+    });
+  });
+
+  // ---- Scene 5 (14.0 – 17)
+  const L = eBack(P(t, 14.05, 14.75)), Lo = P(t, 14.05, 14.4);
+  style($('logo'), {
+    opacity: Lo, transform: `translateY(${(1 - L) * 40}px) scale(${lerp(.4, 1, L)}) rotate(${(1 - L) * -25}deg)`,
+    boxShadow: `0 30px ${80 + Math.sin(t * 3) * 20}px rgba(143,124,255,${.45 * Lo}), 0 0 0 1px rgba(255,255,255,.2) inset`,
+  });
+  const wd = eOut5(P(t, 14.35, 15.0));
+  style($('word'), { opacity: wd, transform: `translateY(${(1 - wd) * 50}px)`, filter: `blur(${(1 - wd) * 16}px)`, letterSpacing: `${lerp(.05, -.035, wd)}em` });
+  const sb = eOut(P(t, 14.6, 15.1));
+  style($('sub'), { opacity: sb, transform: `translateY(${(1 - sb) * 20}px)` });
+  const cm = eOut(P(t, 14.9, 15.3));
+  style($('cmd'), { opacity: cm, transform: `translateX(-50%) translateY(${(1 - cm) * 20}px)` });
+  const n = Math.round(CMD.length * P(t, 15.15, 16.05));
+  $('cmdtxt').textContent = CMD.slice(0, n);
+  $('caret').style.opacity = (n < CMD.length || Math.floor(t * 2.5) % 2 === 0) ? 1 : 0;
+  const ur = eOut(P(t, 15.6, 16.1));
+  style($('url'), { opacity: ur });
+
+  // ---- cursor & ripples
+  const [cx, cy] = cursorAt(t);
+  const cvis = env(t, 2.7, 6.2, .3, .4) + env(t, 7.1, 10.6, .3, .4);
+  const press = CLICKS.some((c) => t > c - .05 && t < c + .1) ? .85 : 1;
+  style($('cursor'), { left: cx + 'px', top: cy + 'px', opacity: clamp(cvis), transform: `scale(${press})`, transformOrigin: '4px 3px' });
+  CLICKS.forEach((c, i) => {
+    const k = P(t, c, c + .5);
+    style(ripEls[i], { left: (cx + 4) + 'px', top: (cy + 3) + 'px', opacity: k > 0 && k < 1 ? (1 - k) : 0, transform: `scale(${lerp(.2, 1.3, eOut(k))})` });
+  });
+
+  // ---- global
+  const flash = Math.max(Math.exp(-Math.pow((t - 14.1) * 9, 2)) * .35, Math.exp(-Math.pow((t - 5.4) * 12, 2)) * .12);
+  $('flash').style.opacity = flash;
+  $('fade').style.opacity = Math.max(1 - P(t, 0, .25), P(t, T_END - .45, T_END));
+}
+
+window.T_END = T_END;
+window.render = render;
+// live preview: open the file directly and it plays in real time (append ?t=5 to freeze)
+if (!navigator.webdriver) {
+  const q = new URLSearchParams(location.search).get('t');
+  if (q !== null) render(parseFloat(q));
+  else { const t0 = performance.now(); const loop = () => { render(((performance.now() - t0) / 1000) % T_END); requestAnimationFrame(loop); }; loop(); }
+} else render(0);
+</script>
+</body>
+</html>

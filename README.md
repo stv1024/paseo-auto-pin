@@ -10,6 +10,10 @@ Auto-Pin runs in the background, even when its panel is closed.
 Create a workspace. Auto-Pin moves it into **Pinned** automatically.
 [Watch the original video](docs/demo.mp4).
 
+[![Auto-Pin promo: watch the 17-second video](promo/poster.png)](promo/auto-pin-promo.mp4)
+
+A 17-second overview of automatic pinning, project rules, and installation.
+
 ## Install
 
 Requires **Paseo 0.9.1–0.9.x** and Node.js/npm on the machine running the Paseo daemon.
