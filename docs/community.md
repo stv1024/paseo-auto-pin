@@ -13,6 +13,9 @@ The recording shows a newly created workspace appearing in **Pinned** automatica
 - [npm package](https://www.npmjs.com/package/paseo-auto-pin)
 - [paseo.cafe submission](https://github.com/paseo-cafe/paseo-cafe/issues/228)
 - [paseo.cafe registry PR](https://github.com/paseo-cafe/paseo-cafe/pull/253)
+- [Promo video (release asset)](https://github.com/stv1024/paseo-auto-pin/releases/download/v0.4.0/auto-pin-promo.mp4)
+  — embedded in the Show and tell post and the v0.4.0 release notes, and announced in
+  [a discussion comment](https://github.com/getpaseo/paseo/discussions/5346#discussioncomment-18639300) on 2026-09-28.
 
 ## Where to check feedback
 
