@@ -1,12 +1,21 @@
 # Changelog
 
-## Unreleased
+## 0.4.1 — 2026-09-30
 
+- Allow Paseo **>=0.9.1** without an upper version limit,
+  so later stable hosts are not rejected solely by their version number.
+- Update the client and plugin SDKs to **0.10.2**. Keep SDK dependencies locked
+  for repeatable builds while leaving the host requirement open-ended.
+- Run the integration suite against the actual installed CLI version instead
+  of requiring and reporting 0.9.1. Verify Paseo **0.9.1** and **0.10.2** for
+  plugin loading, client compilation, pinning, project rules, and reload.
+- Preserve plugin logs when an integration check fails, before stopping the
+  test daemon.
 - Document the Paseo 0.9.2 creation-response race that can temporarily hide new
   pins, with an isolated reproduction and a candidate host patch for upstream
   review. Reported upstream as
   [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447).
-  Plugin behavior and supported version requirements are unchanged.
+  The diagnostic does not change plugin pinning behavior.
 
 ## 0.4.0 — 2026-09-24
 

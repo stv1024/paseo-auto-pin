@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.resetAllMocks());
 
-describe("Paseo 0.9.1 pin transport", () => {
+describe("Paseo pin transport", () => {
   it.each([
     [undefined, "ws://127.0.0.1:6767/ws"],
     ["127.0.0.1:7777", "ws://127.0.0.1:7777/ws"],

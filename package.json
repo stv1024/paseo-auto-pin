@@ -1,6 +1,6 @@
 {
   "name": "paseo-auto-pin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Automatically pin new Paseo workspaces, with defaults and rules for individual projects.",
   "license": "MIT",
   "author": "stv1024",
@@ -36,10 +36,10 @@
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
-    "@getpaseo/client": "0.9.1"
+    "@getpaseo/client": "0.10.2"
   },
   "devDependencies": {
-    "@getpaseo/plugin": "0.9.1",
+    "@getpaseo/plugin": "0.10.2",
     "@types/node": "^24.0.0",
     "@types/react": "19.2.0",
     "react-native": "0.81.5",

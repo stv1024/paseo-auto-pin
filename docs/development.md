@@ -1,7 +1,15 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.4 targets Paseo **>=0.9.1 <0.10.0**. Both Paseo SDK dependencies are
-pinned to 0.9.1. The host supplies React and React Native at runtime.
+Auto-Pin 0.4.1 requires Paseo **>=0.9.1**, with no upper version limit. The
+integration suite has been verified with Paseo **0.9.1** and **0.10.2**. Later
+stable versions may load without changing the manifest, but this is not a
+guarantee that future Paseo API changes will remain compatible.
+
+Both Paseo SDK dependencies are pinned to **0.10.2** for repeatable builds; these
+dependency pins do not restrict the host's version. The host supplies React and
+React Native at runtime. Keep the SDK versions in sync and rerun integration
+checks against both the minimum supported host and the latest stable host when
+updating them.
 
 ## Local setup
 
@@ -105,7 +113,7 @@ See [the known issue, upstream status, and maintenance policy](paseo-workspace-r
 Host state synchronization fixes belong upstream. Keep the plugin's creation
 hook independent of response timing and preserve manual unpinning.
 
-Paseo 0.9.1's public `PaseoApi` has no pin mutation. The pin adapter uses
+Paseo 0.10.2's public `PaseoApi` still has no pin mutation. The pin adapter uses
 `DaemonClient` from `@getpaseo/client/internal/daemon-client` over a short-lived
 connection to the local daemon. This is the only internal SDK integration.
 
@@ -115,7 +123,7 @@ closes the connection and blocks late handshakes from sending a pin request.
 Cancellation cannot undo a request the daemon already accepted.
 
 Paseo's native server settings handle has `read()` and `subscribe()`, but no
-write method in 0.9.1, so Auto-Pin retains its own settings file and RPCs.
+write method in 0.10.2, so Auto-Pin retains its own settings file and RPCs.
 
 | RPC | Purpose |
 | --- | --- |
@@ -133,9 +141,15 @@ For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.9.1
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.10.2
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
+
+Repeat with `@getpaseo/cli@0.9.1` in another runtime directory to verify the
+minimum supported host. To check a future stable release, install
+`@getpaseo/cli@latest`. The script reads the installed CLI version and passes
+that real version to the daemon, so manifest validation uses the host under
+test rather than a hard-coded version.
 
 Git must be available. The script creates a temporary Paseo home, repositories,
 and worktrees, using an automatically assigned loopback port. AI providers,

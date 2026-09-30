@@ -88,10 +88,11 @@ created workspaces, including worktrees. Existing pins stay as they are.
 Install:
 
 ```bash
-paseo plugin install npm:paseo-auto-pin@0.4.0
+paseo plugin install npm:paseo-auto-pin@0.4.1
 ```
 
-Requires Paseo 0.9.1–0.9.x.
+Requires Paseo 0.9.1 or later. Auto-Pin 0.4.1 allows newer stable Paseo releases
+without an upper version limit and has been integration-tested with 0.9.1 and 0.10.2.
 
 GitHub: https://github.com/stv1024/paseo-auto-pin
 

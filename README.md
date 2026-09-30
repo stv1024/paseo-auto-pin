@@ -16,12 +16,14 @@ A 17-second overview of automatic pinning, project rules, and installation.
 
 ## Install
 
-Requires **Paseo 0.9.1–0.9.x** and Node.js/npm on the machine running the Paseo daemon.
+Requires **Paseo 0.9.1 or later** and Node.js/npm on the machine running the Paseo daemon.
+Auto-Pin 0.4.1 removes the upper version limit; newer stable Paseo releases are
+allowed to load without a plugin update just to change the version requirement.
 Paseo 0.9.2 has a [known sidebar synchronization issue](docs/paseo-workspace-race.md)
 that can temporarily hide a newly applied pin.
 
 ```bash
-paseo plugin install npm:paseo-auto-pin@0.4.0
+paseo plugin install npm:paseo-auto-pin@0.4.1
 ```
 
 Or install from GitHub:
@@ -74,7 +76,9 @@ paseo plugin update auto-pin
 Updating from 0.3 keeps your existing on/off setting. Every project starts on
 **Follow default** until you choose otherwise.
 
-Auto-Pin **0.4.x** supports Paseo **0.9.1–0.9.x**.
+Auto-Pin **0.4.1** has been integration-tested with Paseo **0.9.1** and **0.10.2**.
+Future versions are allowed, but compatibility still depends on Paseo keeping
+the APIs this plugin uses. Auto-Pin 0.4.0 is restricted to Paseo 0.9.1–0.9.x.
 For Paseo 0.8, use Auto-Pin 0.2.0; for Paseo 0.7, use 0.1.0.
 
 ## Need a hand?

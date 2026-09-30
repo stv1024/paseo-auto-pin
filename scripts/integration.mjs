@@ -10,14 +10,14 @@ import { promisify } from "node:util";
 
 const exec = promisify(execFile);
 
-// Install @getpaseo/cli@0.9.1 in a separate directory, then pass --runtime DIR.
+// Install the Paseo CLI version to test in a separate directory, then pass --runtime DIR.
 // All daemon data and test workspaces belong to a fresh temporary directory.
 const runtimeIndex = process.argv.indexOf("--runtime");
 if (runtimeIndex < 0 || !process.argv[runtimeIndex + 1]) {
   throw new Error("Usage: npm run test:integration -- --runtime <directory containing node_modules/@getpaseo/cli>");
 }
 const requireRuntime = createRequire(join(resolve(process.argv[runtimeIndex + 1]), "package.json"));
-assert.equal(requireRuntime("@getpaseo/cli/package.json").version, "0.9.1", "integration requires Paseo CLI 0.9.1");
+const paseoVersion = requireRuntime("@getpaseo/cli/package.json").version;
 const load = (name) => import(pathToFileURL(requireRuntime.resolve(name)).href);
 const [{ createPaseoDaemon, loadConfig }, { DaemonClient }, { default: pino }] = await Promise.all([
   load("@getpaseo/server"), load("@getpaseo/client/internal/daemon-client"), load("pino"),
@@ -50,7 +50,7 @@ await writeFile(join(home, "plugin-data", "auto-pin.json"), '{"enabled":false}')
 const config = loadConfig(home, { env: {} });
 const disabledSpeech = { provider: "local", explicit: true, enabled: false };
 Object.assign(config, {
-  daemonVersion: "0.9.1",
+  daemonVersion: paseoVersion,
   browserToolsEnabled: false,
   webUi: {
     enabled: keepUi,
@@ -125,7 +125,7 @@ try {
   const catalog = await client.getPluginCatalog();
   assert.ok(catalog.find((item) => item.id === "auto-pin")?.clientBundle, "client bundle must be available");
   assert.deepEqual(await state(), { running: true, enabled: false, projectRules: {}, revision: 0 });
-  console.log("PASS: plugin loads on Paseo 0.9.1 and preserves disabled settings");
+  console.log(`PASS: plugin loads on Paseo ${paseoVersion} and preserves disabled settings`);
 
   await assertUnpinned(await createWorkspace("disabled-switch"));
   assert.equal((await client.invokePluginRpc("auto-pin", "autopin.toggle", {})).enabled, true);
@@ -184,13 +184,26 @@ try {
   const { running: _running, ...saved } = beforeReload;
   assert.deepEqual(JSON.parse(await readFile(join(home, "plugin-data", "auto-pin.json"), "utf8")), saved);
   console.log("PASS: concurrent saves serialize; reload preserves the default and project rules");
-  console.log("Paseo 0.9.1 integration passed.");
+  console.log(`Paseo ${paseoVersion} integration passed.`);
   if (keepUi) {
     console.log(`Open http://${persisted.daemon.listen} to check the panel. Press Enter to stop.`);
     process.stdin.resume();
     await new Promise((resolve) => process.stdin.once("data", resolve));
     process.stdin.pause();
   }
+} catch (error) {
+  // Plugin output is held by the daemon; preserve it before shutdown on failure.
+  if (client) {
+    try {
+      const logs = await client.getPluginLogs("auto-pin");
+      const logPath = join(testRoot, "plugin-logs.json");
+      await writeFile(logPath, JSON.stringify(logs, null, 2));
+      console.error(`Plugin failure logs: ${logPath}`);
+    } catch (logError) {
+      console.error("Could not collect plugin failure logs:", logError);
+    }
+  }
+  throw error;
 } finally {
   try { await client?.close(); }
   finally {
