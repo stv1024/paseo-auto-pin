@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.2 — 2026-10-09
+
+- Set the current workspace's project rule from the Command Center:
+  **Auto-Pin: Always Pin This Project**, **Never Pin This Project**, and
+  **This Project Follows Default**. The panel updates immediately.
+- Add `OVERVIEW.md`, the listing page for the
+  [official Paseo plugin registry](https://paseo.sh/plugins/stv1024/auto-pin),
+  and ship it in the npm package.
+- Document `paseo plugin add stv1024/auto-pin` for Paseo 0.11 and later.
+  npm and GitHub installation remain available for every supported version.
+- Update the client and plugin SDKs to **0.11.1**. Verify Paseo **0.9.1**,
+  **0.10.2**, and **0.11.1** with the integration suite.
+- Record the upstream status of the workspace creation race
+  ([getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447)), which
+  is still open in Paseo 0.11.1.
+
+Requires Paseo 0.9.1 or later. Pinning behavior and saved settings are unchanged.
+
 ## 0.4.1 — 2026-09-30
 
 - Allow Paseo **>=0.9.1** without an upper version limit,

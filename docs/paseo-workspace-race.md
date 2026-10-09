@@ -16,6 +16,12 @@ No fixed official release has been verified. Other versions have not been
 checked for this specific race; the plugin's supported range is not a claim
 that every host version is free of this issue.
 
+**Update, October 9, 2026:** the issue is still open (labeled p3). On September 26
+the Paseo maintainers' bot reproduced it on `main` without added delays when the
+workspace starts with an initial agent, confirmed the cause, and left the choice
+of fix to the maintainer. Paseo 0.11.1 is the latest stable release and contains
+no fix. Its plugin SDK still has no way to set a pin as part of the creation request.
+
 The interval before the pin reappears depends on the next directory update or
 resynchronization. Auto-Pin has no timer that removes or reapplies pins. Its
 panel's **Refresh** button refreshes plugin settings and projects, not the host

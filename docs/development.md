@@ -1,11 +1,11 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.4.1 requires Paseo **>=0.9.1**, with no upper version limit. The
-integration suite has been verified with Paseo **0.9.1** and **0.10.2**. Later
+Auto-Pin 0.4.2 requires Paseo **>=0.9.1**, with no upper version limit. The
+integration suite has been verified with Paseo **0.9.1**, **0.10.2**, and **0.11.1**. Later
 stable versions may load without changing the manifest, but this is not a
 guarantee that future Paseo API changes will remain compatible.
 
-Both Paseo SDK dependencies are pinned to **0.10.2** for repeatable builds; these
+Both Paseo SDK dependencies are pinned to **0.11.1** for repeatable builds; these
 dependency pins do not restrict the host's version. The host supplies React and
 React Native at runtime. Keep the SDK versions in sync and rerun integration
 checks against both the minimum supported host and the latest stable host when
@@ -113,7 +113,8 @@ See [the known issue, upstream status, and maintenance policy](paseo-workspace-r
 Host state synchronization fixes belong upstream. Keep the plugin's creation
 hook independent of response timing and preserve manual unpinning.
 
-Paseo 0.10.2's public `PaseoApi` still has no pin mutation. The pin adapter uses
+Paseo 0.11.1's public `PaseoApi` still has no pin mutation, and the
+`workspace.create` request has no pin field for a `before` hook to set. The pin adapter uses
 `DaemonClient` from `@getpaseo/client/internal/daemon-client` over a short-lived
 connection to the local daemon. This is the only internal SDK integration.
 
@@ -123,7 +124,7 @@ closes the connection and blocks late handshakes from sending a pin request.
 Cancellation cannot undo a request the daemon already accepted.
 
 Paseo's native server settings handle has `read()` and `subscribe()`, but no
-write method in 0.10.2, so Auto-Pin retains its own settings file and RPCs.
+write method in 0.11.1, so Auto-Pin retains its own settings file and RPCs.
 
 | RPC | Purpose |
 | --- | --- |
@@ -141,11 +142,11 @@ For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.10.2
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.11.1
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 
-Repeat with `@getpaseo/cli@0.9.1` in another runtime directory to verify the
+Repeat with `@getpaseo/cli@0.9.1` and `@getpaseo/cli@0.10.2` in other runtime directories to verify the
 minimum supported host. To check a future stable release, install
 `@getpaseo/cli@latest`. The script reads the installed CLI version and passes
 that real version to the daemon, so manifest validation uses the host under
@@ -183,6 +184,15 @@ previous selection visible. Check the Command Center with the panel open.
 | `client/state.ts` | Shared client state and revision handling. |
 | `index.server.ts` / `index.client.tsx` | Register contributions. |
 | `scripts/integration.mjs` | Isolated daemon verification. |
+
+## Registry listing
+
+The [official registry](https://github.com/getpaseo/plugins) lists Auto-Pin as
+`stv1024/auto-pin` and pins an exact npm version. After a new npm release, the
+registry bot opens a bump pull request; a maintainer reviews it before the listing
+changes. `OVERVIEW.md` is the listing page shown inside Paseo. It must ship at the
+package root beside `paseo-plugin.json`, must not contain installation commands,
+and should be updated whenever plugin behavior changes.
 
 When changing the supported Paseo version, recheck the internal pin adapter,
 manifest validation, client/server compilation, and the daemon integration.

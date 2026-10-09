@@ -1,7 +1,14 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
-import { autopinEnsure, autopinToggle } from "./shared/contracts";
+import { autopinEnsure, autopinSetProjectRule, autopinToggle, type ProjectRule } from "./shared/contracts";
 import { AutoPinPanel } from "./client/panel";
 import { publishAutopinState } from "./client/state";
+
+// Set the current workspace's project rule without opening the panel.
+const PROJECT_COMMANDS: { rule: ProjectRule; title: string; keywords: string[] }[] = [
+  { rule: "always", title: "Auto-Pin: Always Pin This Project", keywords: ["always", "rule", "project"] },
+  { rule: "never", title: "Auto-Pin: Never Pin This Project", keywords: ["never", "skip", "rule", "project"] },
+  { rule: "default", title: "Auto-Pin: This Project Follows Default", keywords: ["default", "reset", "rule", "project"] },
+];
 
 export default function contribute(plugin: PluginClientContext) {
   plugin.addSurface("autopin", AutoPinPanel);
@@ -38,6 +45,18 @@ export default function contribute(plugin: PluginClientContext) {
       openSurface("autopin");
     },
   });
+  for (const { rule, title, keywords } of PROJECT_COMMANDS) {
+    plugin.addCommandCenterItem({
+      id: `project-${rule}`,
+      title,
+      icon: "Pin",
+      keywords: ["pin", "autopin", "workspace", "auto", ...keywords],
+      context: "workspace",
+      async onSelect({ rpc, workspace }) {
+        publishAutopinState(await rpc(autopinSetProjectRule, { projectId: workspace.projectId, rule }));
+      },
+    });
+  }
   let disposed = false;
   void plugin.rpc(autopinEnsure, {}).then((result) => {
     if (!disposed) publishAutopinState(result);
