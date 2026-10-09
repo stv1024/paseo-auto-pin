@@ -1,6 +1,6 @@
 {
   "name": "paseo-auto-pin",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Automatically pin new Paseo workspaces, with defaults and rules for individual projects.",
   "license": "MIT",
   "author": "stv1024",
@@ -24,6 +24,7 @@
   "files": [
     "paseo-plugin.json",
     "OVERVIEW.md",
+    "assets/",
     "index.client.tsx",
     "index.server.ts",
     "client/",

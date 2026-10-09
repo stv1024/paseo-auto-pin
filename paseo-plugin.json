@@ -1,6 +1,14 @@
 {
   "id": "auto-pin",
+  "name": "Auto-Pin",
   "description": "Automatically pin new workspaces. Follow a default or choose Always / Never for each project.",
-  "requirements": { "paseo": ">=0.9.1" },
+  "icon": "assets/icon.png",
+  "media": [
+    "assets/screenshot-panel.png",
+    "assets/screenshot-commands.png",
+    "docs/demo.gif",
+    "https://github.com/stv1024/paseo-auto-pin/releases/download/v0.4.0/auto-pin-promo.mp4"
+  ],
+  "requirements": { "paseo": ">=0.11.0" },
   "build": [["npm", "ci", "--include=dev", "--ignore-scripts"]]
 }

@@ -1,4 +1,4 @@
-import { useRpc, type PluginSurfaceProps } from "@getpaseo/plugin/client";
+import { useRpc, type PluginScreenProps } from "@getpaseo/plugin/client";
 import { Icon } from "@getpaseo/plugin/client/react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -15,7 +15,7 @@ const RULES: { value: ProjectRule; label: string }[] = [
   { value: "never", label: "Never" },
 ];
 
-export function AutoPinPanel({ theme, layout }: PluginSurfaceProps) {
+export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
   const ensure = useRpc(autopinEnsure);
   const listProjects = useRpc(autopinProjects);
   const toggle = useRpc(autopinToggle);

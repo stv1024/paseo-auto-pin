@@ -1,6 +1,6 @@
 Auto-Pin pins each new workspace as soon as Paseo creates it, so it appears in the **Pinned** section of the sidebar. It runs on the daemon, so it also works when no app is open and when the Auto-Pin panel is closed.
 
-**Pin new workspaces by default** is the global switch. It starts on. Each project can override it:
+**Pin new workspaces by default** is the global switch. It starts on, and you can flip it from the Auto-Pin row at the top of the sidebar. Each project can override it:
 
 - **Follow default** uses the switch.
 - **Always** pins new workspaces in that project, even when the switch is off.

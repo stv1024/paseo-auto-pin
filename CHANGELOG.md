@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 — 2026-10-09
+
+- Add an **Auto-Pin** row to the sidebar header. Its switch turns the default on
+  or off in one click; the row opens the panel. The row also picks up changes
+  from other clients every minute.
+- Move the panel to Paseo 0.11 screens (`addScreen`). Links to the former
+  surface keep working because the id is unchanged.
+- Add a display name, an icon, and screenshots to the manifest for the plugin
+  registry and Paseo's plugin pages.
+- Mention the sidebar switch in `OVERVIEW.md`.
+
+Requires **Paseo 0.11.0 or later**. For Paseo 0.9.1 to 0.10.x, stay on 0.4.2.
+Pinning behavior and saved settings are unchanged.
+
 ## 0.4.2 — 2026-10-09
 
 - Set the current workspace's project rule from the Command Center:

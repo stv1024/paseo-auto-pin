@@ -1,6 +1,7 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
 import { autopinEnsure, autopinSetProjectRule, autopinToggle, type ProjectRule } from "./shared/contracts";
 import { AutoPinPanel } from "./client/panel";
+import { AutoPinSidebarItem, SCREEN_ID } from "./client/sidebar";
 import { publishAutopinState } from "./client/state";
 
 // Set the current workspace's project rule without opening the panel.
@@ -11,13 +12,9 @@ const PROJECT_COMMANDS: { rule: ProjectRule; title: string; keywords: string[] }
 ];
 
 export default function contribute(plugin: PluginClientContext) {
-  plugin.addSurface("autopin", AutoPinPanel);
-  plugin.addSidebarItem({
-    id: "autopin",
-    title: "Auto-Pin",
-    icon: "Pin",
-    surface: "autopin",
-  });
+  // The screen keeps the former surface id so saved links still open it.
+  plugin.addScreen({ id: SCREEN_ID, title: "Auto-Pin", Component: AutoPinPanel });
+  plugin.addSidebarHeaderItem({ id: "autopin", title: "Auto-Pin", Component: AutoPinSidebarItem });
   plugin.addCommandCenterItem({
     id: "toggle-autopin",
     // Both command titles share the "Auto-Pin:" prefix on purpose: the host
@@ -41,8 +38,8 @@ export default function contribute(plugin: PluginClientContext) {
     icon: "Pin",
     keywords: ["pin", "autopin", "workspace", "auto", "panel", "settings", "status"],
     context: "global",
-    onSelect({ openSurface }) {
-      openSurface("autopin");
+    onSelect({ openScreen }) {
+      openScreen({ screenId: SCREEN_ID });
     },
   });
   for (const { rule, title, keywords } of PROJECT_COMMANDS) {

@@ -1,7 +1,9 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.4.2 requires Paseo **>=0.9.1**, with no upper version limit. The
-integration suite has been verified with Paseo **0.9.1**, **0.10.2**, and **0.11.1**. Later
+Auto-Pin 0.5.0 requires Paseo **>=0.11.0**, with no upper version limit. The
+manifest uses `name`, `icon`, and `media`, and the client uses `addScreen` and
+`addSidebarHeaderItem`; Paseo 0.10 and earlier reject or lack these. The
+integration suite has been verified with Paseo **0.11.1**. Later
 stable versions may load without changing the manifest, but this is not a
 guarantee that future Paseo API changes will remain compatible.
 
@@ -146,8 +148,8 @@ npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @get
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 
-Repeat with `@getpaseo/cli@0.9.1` and `@getpaseo/cli@0.10.2` in other runtime directories to verify the
-minimum supported host. To check a future stable release, install
+When the minimum host differs from the latest stable release, repeat with the
+minimum version in another runtime directory. To check a future stable release, install
 `@getpaseo/cli@latest`. The script reads the installed CLI version and passes
 that real version to the daemon, so manifest validation uses the host under
 test rather than a hard-coded version.
@@ -169,7 +171,8 @@ you want to test.
 
 Before a release, also check the panel at desktop and narrow widths: change
 each rule, toggle the default, search, reconnect, and confirm failures leave the
-previous selection visible. Check the Command Center with the panel open.
+previous selection visible. Check the Command Center with the panel open, and
+flip the sidebar header switch while the panel is open and closed.
 
 ## Files to start with
 
@@ -180,9 +183,11 @@ previous selection visible. Check the Command Center with the panel open.
 | `server/pin.ts` | Version-specific pin transport. |
 | `server/handlers.ts` | Settings and project RPC handlers. |
 | `shared/contracts.ts` | Shared RPC schemas and types. |
-| `client/panel.tsx` | Settings interface. |
+| `client/panel.tsx` | Settings screen. |
+| `client/sidebar.tsx` | Sidebar header row with the default switch. |
 | `client/state.ts` | Shared client state and revision handling. |
 | `index.server.ts` / `index.client.tsx` | Register contributions. |
+| `assets/` | Registry icon and screenshots referenced by the manifest. |
 | `scripts/integration.mjs` | Isolated daemon verification. |
 
 ## Registry listing
