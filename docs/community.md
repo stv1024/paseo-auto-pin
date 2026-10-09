@@ -16,6 +16,12 @@ The recording shows a newly created workspace appearing in **Pinned** automatica
 - [Promo video (release asset)](https://github.com/stv1024/paseo-auto-pin/releases/download/v0.4.0/auto-pin-promo.mp4)
   — embedded in the Show and tell post and the v0.4.0 release notes, and announced in
   [a discussion comment](https://github.com/getpaseo/paseo/discussions/5346#discussioncomment-18639300) on 2026-09-28.
+- [Official registry listing](https://paseo.sh/plugins/stv1024/auto-pin)
+  (`stv1024/auto-pin`, record in [getpaseo/plugins](https://github.com/getpaseo/plugins/blob/main/plugins/stv1024/auto-pin.json)).
+  The registry bot opens a bump pull request after each npm release.
+- [Auto-Pin 0.5.0 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.5.0),
+  announced in [a discussion comment](https://github.com/getpaseo/paseo/discussions/5346#discussioncomment-18829028)
+  on 2026-10-09.
 
 ## Where to check feedback
 
