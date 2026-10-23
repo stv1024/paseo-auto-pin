@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.1 — 2026-10-24
+
+- Ship `npm-shrinkwrap.json` inside the published package. npm installations
+  now lock `@getpaseo/client` and its runtime tree (`@getpaseo/protocol`,
+  `@getpaseo/relay`, `zod`) with resolved sources and integrity. The registry
+  review requires a lockfile when an installation installs runtime
+  dependencies; 0.5.0 was withheld for that reason
+  ([getpaseo/plugins#237](https://github.com/getpaseo/plugins/pull/237)).
+- Keep one lockfile in the repository: `package-lock.json` is renamed to
+  `npm-shrinkwrap.json`, so the manifest's Git build step (`npm ci`) and the
+  published tarball use the same fixed tree.
+- No behavior change. Pinning, settings, and the manifest are unchanged.
+
 ## 0.5.0 — 2026-10-09
 
 - Add an **Auto-Pin** row to the sidebar header. Its switch turns the default on

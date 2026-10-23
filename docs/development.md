@@ -1,6 +1,6 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.5.0 requires Paseo **>=0.11.0**, with no upper version limit. The
+Auto-Pin 0.5.1 requires Paseo **>=0.11.0**, with no upper version limit. The
 manifest uses `name`, `icon`, and `media`, and the client uses `addScreen` and
 `addSidebarHeaderItem`; Paseo 0.10 and earlier reject or lack these. The
 integration suite has been verified with Paseo **0.11.1**. Later
@@ -12,6 +12,14 @@ dependency pins do not restrict the host's version. The host supplies React and
 React Native at runtime. Keep the SDK versions in sync and rerun integration
 checks against both the minimum supported host and the latest stable host when
 updating them.
+
+The two pins have different roles. `@getpaseo/plugin` is a development
+dependency: Paseo resolves it while it compiles the plugin. `@getpaseo/client`
+is a **runtime dependency**, because `server/pin.ts` imports `DaemonClient` from
+the `@getpaseo/client/internal/daemon-client` subpath. An installation that
+installs runtime dependencies must ship a lockfile that fixes the tree, so
+`npm-shrinkwrap.json` is committed, listed in `files`, and published. The
+registry review rejects a package that declares dependencies without it.
 
 ## Local setup
 
@@ -43,6 +51,8 @@ The command prints the tarball path, integrity, and included files. It stages a
 package in a fresh temporary directory, removes `private` and development scripts,
 and omits only the known Git dependency-install command from the staged manifest.
 The source repository stays private to npm to prevent accidental direct publishing.
+Check that the printed file list contains `npm-shrinkwrap.json`; a tarball without
+it is rejected by the registry review.
 
 Install the printed tarball into a separate test directory with
 `npm install --prefix /path/to/package-test --ignore-scripts --omit=dev --legacy-peer-deps /path/to/paseo-auto-pin-VERSION.tgz`.
