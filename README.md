@@ -84,7 +84,7 @@ paseo plugin update auto-pin
 Updating from 0.3 keeps your existing on/off setting. Every project starts on
 **Follow default** until you choose otherwise.
 
-Auto-Pin **0.5.1** has been integration-tested with Paseo **0.11.1**.
+Auto-Pin **0.5.1** has been integration-tested with Paseo **0.11.1** and **0.12.0**.
 Future versions are allowed, but compatibility still depends on Paseo keeping
 the APIs this plugin uses. Paseo 0.10 and earlier reject the 0.5 manifest.
 For Paseo 0.9.1 to 0.10.x, use Auto-Pin 0.4.2:

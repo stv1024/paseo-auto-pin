@@ -3,7 +3,7 @@
 Auto-Pin 0.5.1 requires Paseo **>=0.11.0**, with no upper version limit. The
 manifest uses `name`, `icon`, and `media`, and the client uses `addScreen` and
 `addSidebarHeaderItem`; Paseo 0.10 and earlier reject or lack these. The
-integration suite has been verified with Paseo **0.11.1**. Later
+integration suite has been verified with Paseo **0.11.1** and **0.12.0**. Later
 stable versions may load without changing the manifest, but this is not a
 guarantee that future Paseo API changes will remain compatible.
 
@@ -120,12 +120,12 @@ the plugin, then reopen the panel. Prefer the panel for normal changes.
 
 ### Paseo integration limits
 
-Paseo 0.9.2 can display an old creation snapshot after the live pin update.
+Paseo 0.9.2 through at least 0.12.0 can display an old creation snapshot after the live pin update.
 See [the known issue, upstream status, and maintenance policy](paseo-workspace-race.md).
 Host state synchronization fixes belong upstream. Keep the plugin's creation
 hook independent of response timing and preserve manual unpinning.
 
-Paseo 0.11.1's public `PaseoApi` still has no pin mutation, and the
+Paseo 0.12.0's public `PaseoApi` still has no pin mutation, and the
 `workspace.create` request has no pin field for a `before` hook to set. The pin adapter uses
 `DaemonClient` from `@getpaseo/client/internal/daemon-client` over a short-lived
 connection to the local daemon. This is the only internal SDK integration.
@@ -136,7 +136,7 @@ closes the connection and blocks late handshakes from sending a pin request.
 Cancellation cannot undo a request the daemon already accepted.
 
 Paseo's native server settings handle has `read()` and `subscribe()`, but no
-write method in 0.11.1, so Auto-Pin retains its own settings file and RPCs.
+write method in 0.12.0, so Auto-Pin retains its own settings file and RPCs.
 
 | RPC | Purpose |
 | --- | --- |
@@ -154,7 +154,7 @@ For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.11.1
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.12.0
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 

@@ -6,14 +6,14 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 
-// Diagnostic only: prove the wire ordering on the released 0.9.2 daemon with
-// controlled response timing. The companion host regression tests the merge.
+// Diagnostic only: prove the wire ordering on a released daemon (first seen on
+// 0.9.2) with controlled response timing. The companion host regression tests the merge.
 const runtimeIndex = process.argv.indexOf("--runtime");
 if (runtimeIndex < 0 || !process.argv[runtimeIndex + 1]) {
-  throw new Error("Usage: node scripts/repro-workspace-race.mjs --runtime <Paseo 0.9.2 runtime directory>");
+  throw new Error("Usage: node scripts/repro-workspace-race.mjs --runtime <Paseo runtime directory>");
 }
 const requireRuntime = createRequire(join(resolve(process.argv[runtimeIndex + 1]), "package.json"));
-assert.equal(requireRuntime("@getpaseo/cli/package.json").version, "0.9.2");
+const paseoVersion = requireRuntime("@getpaseo/cli/package.json").version;
 const load = (name) => import(pathToFileURL(requireRuntime.resolve(name)).href);
 const [{ createPaseoDaemon, loadConfig }, { DaemonClient }, { default: pino }, { Session }] = await Promise.all([
   load("@getpaseo/server"), load("@getpaseo/client/internal/daemon-client"), load("pino"),
@@ -35,7 +35,7 @@ await writeFile(join(home, "config.json"), JSON.stringify(persisted));
 const config = loadConfig(home, { env: {} });
 const disabledSpeech = { provider: "local", explicit: true, enabled: false };
 Object.assign(config, {
-  daemonVersion: "0.9.2", browserToolsEnabled: false,
+  daemonVersion: paseoVersion, browserToolsEnabled: false,
   webUi: { enabled: false, distDir: null },
   speech: { providers: Object.fromEntries(["dictationStt", "voiceTurnDetection", "voiceStt", "voiceTts"].map((id) => [id, disabledSpeech])) },
 });
@@ -64,7 +64,7 @@ Session.prototype.createRequestedWorkspace = async function (...args) {
   return descriptor;
 };
 
-console.log(`Artifacts: ${root}`);
+console.log(`Paseo ${paseoVersion}; artifacts: ${root}`);
 try {
   daemon = await createPaseoDaemon(config, logger);
   await daemon.start();

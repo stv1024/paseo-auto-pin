@@ -1,6 +1,6 @@
-# Known issue: new pins temporarily disappear on Paseo 0.9.2
+# Known issue: new pins temporarily disappear on Paseo 0.9.2 and later
 
-Auto-Pin can expose a client state race in Paseo 0.9.2: a workspace appears pinned,
+Auto-Pin can expose a client state race in Paseo 0.9.2 and later: a workspace appears pinned,
 disappears from Pinned, and returns after a later directory update.
 The daemon's saved pin is not removed.
 
@@ -21,6 +21,21 @@ the Paseo maintainers' bot reproduced it on `main` without added delays when the
 workspace starts with an initial agent, confirmed the cause, and left the choice
 of fix to the maintainer. Paseo 0.11.1 is the latest stable release and contains
 no fix. Its plugin SDK still has no way to set a pin as part of the creation request.
+
+**Update, October 24, 2026:** the race still reproduces on the released Paseo
+**0.12.0** daemon with the diagnostic below. `acceptWorkspaces()` is unchanged in
+v0.12.0, `main`, and v0.13.0-beta.2. The issue is open (p2). The 0.12.0 plugin
+SDK changed only ACP code: `PaseoApi` still has no pin mutation, and
+`workspace.create` still has no pin field. The stock plugin passes the
+integration suite on 0.12.0.
+
+Upstream fix proposal: [getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758),
+opened October 24, 2026 against `main`. It applies the guard described below and
+adds four replica unit tests and a browser E2E test. The E2E test creates a
+workspace with a prompt, pins it while the creation response is held, and counts
+frames in which the row is missing from Pinned. On unchanged `main` it failed in
+3 of 3 runs (32 to 34 missing frames); with the change it passed in 4 of 4 runs.
+An open pull request is not a released fix.
 
 The interval before the pin reappears depends on the next directory update or
 resynchronization. Auto-Pin has no timer that removes or reapplies pins. Its
@@ -63,6 +78,9 @@ the diagnostic from a checkout of this plugin with its dependencies installed:
 npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.9.2
 node scripts/repro-workspace-race.mjs --runtime /path/to/paseo-test-runtime
 ```
+
+The script accepts any installed Paseo version and prints it; replace `0.9.2`
+to check another release. It was last confirmed on 0.12.0.
 
 The script creates a temporary Paseo home and workspace, binds an automatically
 assigned loopback port, and disables agent providers, relay, MCP, and speech.

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Verify Paseo **0.12.0** with the integration suite.
+- Confirm that the workspace creation race still occurs in Paseo 0.12.0, and link
+  the upstream fix proposal ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758)).
+- Let the race diagnostic run on any Paseo version instead of only 0.9.2.
+
 ## 0.5.1 — 2026-10-24
 
 - Ship `npm-shrinkwrap.json` inside the published package. npm installations
