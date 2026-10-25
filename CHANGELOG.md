@@ -7,7 +7,7 @@
   the upstream fix proposal ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758)).
 - Let the race diagnostic run on any Paseo version instead of only 0.9.2.
 
-## 0.5.1 — 2026-10-24
+## 0.5.1 — 2026-10-25
 
 - Ship `npm-shrinkwrap.json` inside the published package. npm installations
   now lock `@getpaseo/client` and its runtime tree (`@getpaseo/protocol`,
