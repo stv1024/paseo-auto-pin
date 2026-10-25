@@ -22,6 +22,9 @@ The recording shows a newly created workspace appearing in **Pinned** automatica
 - [Auto-Pin 0.5.0 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.5.0),
   announced in [a discussion comment](https://github.com/getpaseo/paseo/discussions/5346#discussioncomment-18829028)
   on 2026-10-09.
+- [Auto-Pin 0.5.1 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.5.1)
+  on 2026-10-25: a packaging release that ships `npm-shrinkwrap.json` and clears
+  the registry hold on 0.5.0 ([getpaseo/plugins#237](https://github.com/getpaseo/plugins/pull/237)).
 
 ## Where to check feedback
 
