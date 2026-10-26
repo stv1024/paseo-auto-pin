@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Publish releases from GitHub Actions with npm **Trusted Publishing**
+  (OIDC, `.github/workflows/release.yml`), so no npm token is needed.
 - Verify Paseo **0.12.0** with the integration suite.
 - Confirm that the workspace creation race still occurs in Paseo 0.12.0, and link
   the upstream fix proposal ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758)).

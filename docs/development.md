@@ -39,7 +39,24 @@ a published manifest without the Git-only build step.
 
 ## Publishing on npm
 
-Run the checks, then prepare a tarball:
+Releases are published by
+[`.github/workflows/release.yml`](../.github/workflows/release.yml) with npm
+**Trusted Publishing** over GitHub OIDC. No npm token is stored in the
+repository, in GitHub, or on a machine. npm accepts a publish only when the
+repository, the workflow filename, and the tag match the package's trusted
+publisher record on npmjs.com.
+
+Release sequence:
+
+1. Bump `version` in `package.json` and add the changelog section.
+2. Run the checks and pack the tarball (below).
+3. Commit, push `main`, tag the release commit, and push the tag:
+   `git tag -a v0.5.2 -m "Auto-Pin 0.5.2" && git push origin v0.5.2`.
+   The tag push starts the workflow. A tag that does not match the packed
+   version fails the run before it reaches npm.
+4. Create the GitHub release from that tag.
+
+### Checks before a release
 
 ```bash
 npm run typecheck
@@ -58,12 +75,19 @@ Install the printed tarball into a separate test directory with
 `npm install --prefix /path/to/package-test --ignore-scripts --omit=dev --legacy-peer-deps /path/to/paseo-auto-pin-VERSION.tgz`.
 Verify that installed artifact using
 `npm run test:integration -- --runtime /path/to/paseo-test-runtime --plugin-directory /path/to/package-test/node_modules/paseo-auto-pin`.
+Then run the integration check with `--source npm:paseo-auto-pin@VERSION` after
+publication to verify managed npm acquisition. The integration suite is not part
+of the workflow: it needs a Paseo runtime and a local daemon, so it runs on a
+machine.
 
-Publish that same verified tarball with
-`npm publish /path/to/paseo-auto-pin-VERSION.tgz --access public --registry=https://registry.npmjs.org/`,
-then run the integration check with `--source npm:paseo-auto-pin@VERSION` to verify
-managed npm acquisition. Keep the GitHub and npm package versions in sync, and
-increment the version before each subsequent publication.
+### Manual publication
+
+For an emergency, publish the packed tarball by hand with
+`npm publish /path/to/paseo-auto-pin-VERSION.tgz --access public --registry=https://registry.npmjs.org/`
+after `npm login`. This account has no authenticator app, so npm asks for browser
+approval and the request expires after five minutes. The workflow publishes the
+same artifact the pack command produces, so a manual release and a CI release are
+interchangeable.
 
 ## How it works
 
