@@ -1,11 +1,11 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.5.1 requires Paseo **>=0.11.0**, with no upper version limit. The
+Auto-Pin 0.5.2 requires Paseo **>=0.11.0**, with no upper version limit. The
 manifest uses `name`, `icon`, and `media`, and the client uses `addScreen` and
 `addSidebarHeaderItem`; Paseo 0.10 and earlier reject or lack these. The
-integration suite has been verified with Paseo **0.11.1** and **0.12.0**. Later
-stable versions may load without changing the manifest, but this is not a
-guarantee that future Paseo API changes will remain compatible.
+integration suite has been verified with Paseo **0.11.1**, **0.12.0**, and
+**0.13.0**. Later stable versions may load without changing the manifest, but
+this is not a guarantee that future Paseo API changes will remain compatible.
 
 Both Paseo SDK dependencies are pinned to **0.11.1** for repeatable builds; these
 dependency pins do not restrict the host's version. The host supplies React and
@@ -144,12 +144,13 @@ the plugin, then reopen the panel. Prefer the panel for normal changes.
 
 ### Paseo integration limits
 
-Paseo 0.9.2 through at least 0.12.0 can display an old creation snapshot after the live pin update.
-See [the known issue, upstream status, and maintenance policy](paseo-workspace-race.md).
+Paseo 0.9.2 through 0.12.x can display an old creation snapshot after the live
+pin update; Paseo 0.13.0 fixes this in the app. See
+[the known issue, its fix, and the maintenance policy](paseo-workspace-race.md).
 Host state synchronization fixes belong upstream. Keep the plugin's creation
 hook independent of response timing and preserve manual unpinning.
 
-Paseo 0.12.0's public `PaseoApi` still has no pin mutation, and the
+Paseo 0.13.0's public `PaseoApi` still has no pin mutation, and the
 `workspace.create` request has no pin field for a `before` hook to set. The pin adapter uses
 `DaemonClient` from `@getpaseo/client/internal/daemon-client` over a short-lived
 connection to the local daemon. This is the only internal SDK integration.
@@ -160,7 +161,7 @@ closes the connection and blocks late handshakes from sending a pin request.
 Cancellation cannot undo a request the daemon already accepted.
 
 Paseo's native server settings handle has `read()` and `subscribe()`, but no
-write method in 0.12.0, so Auto-Pin retains its own settings file and RPCs.
+write method in 0.13.0, so Auto-Pin retains its own settings file and RPCs.
 
 | RPC | Purpose |
 | --- | --- |
@@ -178,7 +179,7 @@ For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.12.0
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.13.0
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 
@@ -232,6 +233,12 @@ registry bot opens a bump pull request; a maintainer reviews it before the listi
 changes. `OVERVIEW.md` is the listing page shown inside Paseo. It must ship at the
 package root beside `paseo-plugin.json`, must not contain installation commands,
 and should be updated whenever plugin behavior changes.
+
+The manifest's `translations` and `OVERVIEW.zh-CN.md` give the listing in
+Simplified Chinese. Only the registry reads them; Paseo ignores both. When
+`OVERVIEW.md` or the manifest `description` changes, update the translation in
+the same change. `OVERVIEW.zh-CN.md` is a complete page, not a partial override,
+and has the same rules as `OVERVIEW.md`.
 
 When changing the supported Paseo version, recheck the internal pin adapter,
 manifest validation, client/server compilation, and the daemon integration.

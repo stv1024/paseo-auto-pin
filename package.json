@@ -1,6 +1,6 @@
 {
   "name": "paseo-auto-pin",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Automatically pin new Paseo workspaces, with defaults and rules for individual projects.",
   "license": "MIT",
   "author": "stv1024",
@@ -25,6 +25,7 @@
     "paseo-plugin.json",
     "npm-shrinkwrap.json",
     "OVERVIEW.md",
+    "OVERVIEW.zh-CN.md",
     "assets/",
     "index.client.tsx",
     "index.server.ts",

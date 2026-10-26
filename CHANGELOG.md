@@ -1,13 +1,26 @@
 # Changelog
 
-## Unreleased
+## 0.5.2 — 2026-10-26
 
+- Paseo **0.13.0** fixes the sidebar race that could hide a newly applied pin
+  ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758), for
+  [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447)).
+  Verified in the 0.13.0 web app with this plugin: local and worktree
+  workspaces, with and without an initial message, stay in **Pinned**, and a
+  manual unpin still works. Paseo 0.11.x and 0.12.x still have the race; update
+  Paseo to remove it.
+- Verify Paseo **0.11.1**, **0.12.0**, and **0.13.0** with the integration suite.
+- Lock `zod` 4.6.7 in the runtime tree for security advisory
+  [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+- Add a Simplified Chinese registry listing: a `zh-CN` description in the
+  manifest's `translations` and `OVERVIEW.zh-CN.md`. Paseo ignores both.
 - Publish releases from GitHub Actions with npm **Trusted Publishing**
   (OIDC, `.github/workflows/release.yml`), so no npm token is needed.
-- Verify Paseo **0.12.0** with the integration suite.
-- Confirm that the workspace creation race still occurs in Paseo 0.12.0, and link
-  the upstream fix proposal ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758)).
-- Let the race diagnostic run on any Paseo version instead of only 0.9.2.
+- Let the race diagnostic run on any Paseo version instead of only 0.9.2. Add
+  `--ui` to keep its daemon and web app open for a check in the app, and
+  `--no-hold` to let creation responses return at once.
+- No behavior change. Pinning, settings, and the Paseo requirement
+  (`>=0.11.0`) are unchanged.
 
 ## 0.5.1 — 2026-10-25
 

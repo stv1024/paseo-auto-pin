@@ -29,13 +29,13 @@ paseo plugin add stv1024/auto-pin
 You can also install directly from npm or GitHub:
 
 ```bash
-paseo plugin install npm:paseo-auto-pin@0.5.1
+paseo plugin install npm:paseo-auto-pin@0.5.2
 paseo plugin install https://github.com/stv1024/paseo-auto-pin
 ```
 
 The registry can lag behind npm for a few days while each new version is reviewed.
-Paseo 0.9.2 and later have a [known sidebar synchronization issue](docs/paseo-workspace-race.md)
-that can temporarily hide a newly applied pin.
+Paseo 0.11.x and 0.12.x have a [known sidebar synchronization issue](docs/paseo-workspace-race.md)
+that can temporarily hide a newly applied pin. Paseo 0.13.0 fixes it.
 
 The **Auto-Pin** row in the sidebar header shows the default switch. Click the
 switch to turn auto-pin on or off. Click the row to open the panel with project
@@ -84,7 +84,7 @@ paseo plugin update auto-pin
 Updating from 0.3 keeps your existing on/off setting. Every project starts on
 **Follow default** until you choose otherwise.
 
-Auto-Pin **0.5.1** has been integration-tested with Paseo **0.11.1** and **0.12.0**.
+Auto-Pin **0.5.2** has been integration-tested with Paseo **0.11.1**, **0.12.0**, and **0.13.0**.
 Future versions are allowed, but compatibility still depends on Paseo keeping
 the APIs this plugin uses. Paseo 0.10 and earlier reject the 0.5 manifest.
 For Paseo 0.9.1 to 0.10.x, use Auto-Pin 0.4.2:
@@ -102,11 +102,13 @@ If a new workspace is not pinned, check its project rule and the default switch.
 If you just changed a setting on another device, press **Refresh** in the panel.
 
 If a workspace appears pinned, disappears from Pinned, and returns later on
-Paseo 0.9.2 or later, see the [known issue and upstream status](docs/paseo-workspace-race.md).
+Paseo 0.9.2 to 0.12.x, update Paseo to 0.13.0 or later. See the
+[known issue and its fix](docs/paseo-workspace-race.md).
 The daemon retains the pin; updating or reloading Auto-Pin does not fix this
 host issue. The panel's **Refresh** button only refreshes plugin settings and
 projects, so it does not repair the sidebar state.
-Upstream tracking: [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447).
+Upstream fix: [getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758),
+for [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447).
 
 For errors or unexpected behavior, [open an issue](https://github.com/stv1024/paseo-auto-pin/issues).
 Include your Paseo and Auto-Pin versions, the rule you selected, and what happened.

@@ -12,4 +12,4 @@ Auto-Pin only acts when a workspace is created. Existing workspaces are unchange
 
 The switch and project rules are stored in `plugin-data/auto-pin.json` in the Paseo home directory and are shared by every client connected to that daemon. To pin a workspace, the plugin opens a short connection to the daemon endpoint configured in Paseo's `config.json`. If that endpoint is not reachable from the daemon process, the pin fails and the error appears in the plugin log. The plugin makes no other network connections.
 
-On Paseo 0.9.2 and later, a new pin can briefly disappear from the sidebar when the workspace starts with an agent. The daemon keeps the pin, and the row returns on the next sidebar update.
+On Paseo 0.11 and 0.12, a new pin can briefly disappear from the sidebar when the workspace starts with an agent. The daemon keeps the pin, and the row returns on the next sidebar update. Paseo 0.13.0 fixes this.

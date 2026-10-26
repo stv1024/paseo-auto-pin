@@ -1,8 +1,11 @@
-# Known issue: new pins temporarily disappear on Paseo 0.9.2 and later
+# Known issue: new pins temporarily disappear on Paseo 0.9.2 to 0.12.x
 
-Auto-Pin can expose a client state race in Paseo 0.9.2 and later: a workspace appears pinned,
+Auto-Pin can expose a client state race in Paseo 0.9.2 to 0.12.x: a workspace appears pinned,
 disappears from Pinned, and returns after a later directory update.
 The daemon's saved pin is not removed.
+
+**Fixed in Paseo 0.13.0.** To fix it, update Paseo to 0.13.0 or later. Auto-Pin
+needs no update for this fix. On Paseo 0.11.x and 0.12.x the race remains.
 
 ## Status and user impact
 
@@ -36,6 +39,16 @@ workspace with a prompt, pins it while the creation response is held, and counts
 frames in which the row is missing from Pinned. On unchanged `main` it failed in
 3 of 3 runs (32 to 34 missing frames); with the change it passed in 4 of 4 runs.
 An open pull request is not a released fix.
+
+**Update, October 26, 2026: fixed in Paseo 0.13.0.** Paseo merged #7758 on
+October 24, 2026, which closed #5447, and released it the same day in
+[Paseo 0.13.0](https://github.com/getpaseo/paseo/releases/tag/v0.13.0)
+(merge commit `632a7f885958f318ee9e0619b3af075d4798bf55`; 0.13.0-beta.2 and
+earlier do not contain it). In 0.13.0, `acceptWorkspaces()` only seeds rows that
+are missing. The daemon still sends the old creation response after the live pin
+update, but the app no longer applies it. Paseo **0.13.0** is the first verified
+fixed version: the stock plugin passed the
+[released-client check](#released-fix-paseo-0130) below.
 
 The interval before the pin reappears depends on the next directory update or
 resynchronization. Auto-Pin has no timer that removes or reapplies pins. Its
@@ -80,7 +93,8 @@ node scripts/repro-workspace-race.mjs --runtime /path/to/paseo-test-runtime
 ```
 
 The script accepts any installed Paseo version and prints it; replace `0.9.2`
-to check another release. It was last confirmed on 0.12.0.
+to check another release. The wire ordering was last confirmed on 0.13.0, where
+the app no longer applies the old response.
 
 The script creates a temporary Paseo home and workspace, binds an automatically
 assigned loopback port, and disables agent providers, relay, MCP, and speech.
@@ -96,6 +110,15 @@ Expected evidence is a non-null `livePinnedAtBeforeResponse`, a null
 This script proves response ordering and retained server state. It does not
 launch the UI or by itself test the client merge; the regression below exercises
 Paseo's actual workspace replica and session store.
+
+Add `--ui` to test the client merge in the app. The script then keeps the test
+daemon and its bundled web app running, creates a Git project, and prints the
+app URL. It also enables Paseo's development-only mock agent provider, so the
+app can start a workspace with an initial message without a real provider.
+Every workspace that the app creates returns only after its pin update arrives
+(10-second limit). Add `--no-hold` as well to let creation responses return
+without delay. The script prints each pin, unpin, and held response. Press
+Enter to stop it.
 
 ## Candidate upstream fix
 
@@ -128,6 +151,47 @@ races and reconnect behavior have not been verified with this candidate.
 
 ## Verification
 
+### Released fix (Paseo 0.13.0)
+
+Checked on October 26, 2026 on Windows 11 with the released Paseo 0.13.0
+daemon and web app and the stock plugin (the code in Auto-Pin 0.5.1 and 0.5.2). The diagnostic
+ran with `--ui`. A headless Chrome, driven by Playwright from outside this
+repository, used the app's **New workspace** screen to create workspaces:
+
+- with an initial message (mock agent) and empty;
+- as a local checkout and as a new worktree.
+
+For each workspace, the browser sampled every animation frame from **Create**
+until 3 seconds after the workspace opened. It counted the frames in which the
+new row was missing from Pinned after it first appeared there, as Paseo's own
+E2E test does. It also recorded the workspace messages that the app received.
+
+| Arrival order | Scenario | Paseo 0.13.0 | Paseo 0.12.0 (control) |
+| --- | --- | --- | --- |
+| Held: pin, then old response | Initial message, local | 0 frames (2 runs) | 171 frames; still missing at the end |
+| Held: pin, then old response | Initial message, worktree | 0 frames (2 runs) | not run |
+| Held: pin, then old response | Empty, local | 0 frames (3 runs) | 183 frames; still missing at the end |
+| Held: pin, then old response | Empty, worktree | 0 frames (2 runs) | 34 frames; back after a later update |
+| Not held: pin first | Initial message, local and worktree | 0 frames | not run |
+| Not held: response first | Empty, local | 0 frames | not run |
+| Not held: pin first | Empty, worktree | 0 frames | not run |
+
+In every held run, the app received the creation response with
+`pinnedAt: null` after the pinned update, so each run reproduced the race on
+the wire. With an initial message, the pin also arrived first without the
+hold, because the response waits for the agent to start. Every 0.13.0 row was
+still in Pinned at the end.
+
+Manual unpinning from the row menu also passed in both held runs. The row left
+Pinned in the next frame and stayed listed and unpinned, and the daemon
+recorded no new pin in the next 4 seconds.
+
+This check did not cover real agent providers, the desktop and mobile apps,
+reconnects, or archive and restore. The upstream E2E test and review covered
+the replica change with an agent.
+
+### Candidate patch (Paseo 0.9.2)
+
 The new late-creation-response regression failed on the original Paseo code and
 passed after the change. All nine tests in `workspace-replica.test.ts` pass,
 covering both arrival orders, mixed batches, manual unpinning, and archive
@@ -156,16 +220,15 @@ the shipped plugin to mask this race; these cannot guarantee response ordering
 and can interfere with manual pin changes. The diagnostic's timing injection
 is isolated test code and is not loaded by either plugin entry point.
 
-After an official fix is released, verify the released client with the stock
-plugin: initial-message and empty-workspace creation, local checkouts and
-worktrees, both update/response orders, and manual unpinning. Record the first
-verified fixed version and the upstream issue or release link here, then revise
-the README's known-issue notice. Keep the historical reproduction versioned;
-it demonstrates the old wire ordering, which may remain valid even after the
-client merge is fixed. Do not mark the plugin fixed merely because this source
-patch or a proposed upstream change exists.
+Paseo 0.13.0 is the first verified fixed version (see
+[Released fix](#released-fix-paseo-0130)). The plugin still supports Paseo
+0.11.x and 0.12.x, where the race remains; tell users there to update Paseo.
+Keep the historical reproduction versioned: it shows the old wire ordering,
+which is still sent in 0.13.0. If a later Paseo release changes the creation
+flow or the workspace replica, run the `--ui` check again.
 
 The existing integration compromises are documented in
 [Paseo integration limits](development.md#paseo-integration-limits): a small
 internal-client pin adapter and plugin-owned settings persistence, because the
-Paseo 0.9.1 API does not expose those writes. They are independent of this race.
+Paseo plugin API (still in 0.13.0) does not expose those writes. They are
+independent of this race.
