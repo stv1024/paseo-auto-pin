@@ -10,8 +10,8 @@
     "https://github.com/stv1024/paseo-auto-pin/releases/download/v0.4.0/auto-pin-promo.mp4"
   ],
   "translations": {
-    "zh-CN": { "description": "自动置顶新工作区。可以跟随默认设置，也可以为每个项目选择 Always / Never。" }
+    "zh-CN": { "description": "自动置顶新工作区。可以跟随默认设置，也可以为每个项目选择“始终”或“从不”。" }
   },
-  "requirements": { "paseo": ">=0.11.0" },
+  "requirements": { "paseo": ">=0.13.0" },
   "build": [["npm", "ci", "--include=dev", "--ignore-scripts"]]
 }

@@ -1,0 +1,57 @@
+{
+  "commands": {
+    "toggleDefault": "Auto-Pin: Toggle Default",
+    "openPanel": "Auto-Pin: Open Panel",
+    "always": "Auto-Pin: Always Pin This Project",
+    "never": "Auto-Pin: Never Pin This Project",
+    "default": "Auto-Pin: This Project Follows Default"
+  },
+  "switch": {
+    "label": "Pin new workspaces by default",
+    "on": "On",
+    "off": "Off"
+  },
+  "rules": {
+    "default": "Follow default",
+    "always": "Always",
+    "never": "Never"
+  },
+  "panel": {
+    "intro": "Keep new workspaces within reach. Choose a default, then make exceptions for individual projects.",
+    "defaultOn": "On for projects without an override.",
+    "defaultOff": "Off for projects without an override.",
+    "loadingSettings": "Loading your settings…",
+    "defaultHint": "Projects set to Always or Never override this default.",
+    "projects": "Projects",
+    "refreshLabel": "Refresh projects and settings",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "rulesHint": "Always pins new workspaces in that project. Never leaves them unpinned.",
+    "search": "Search projects",
+    "projectsUnavailable": "Projects are unavailable.",
+    "loadingProjects": "Loading projects…",
+    "emptyTitle": "Your projects will appear here",
+    "emptyHint": "Add a project in Paseo to give it its own auto-pin rule.",
+    "noMatch": "No projects match “{{query}}”.",
+    "ruleGroup": "{{project}} auto-pin rule",
+    "ruleOption": "{{project}}: {{rule}}",
+    "loading": "Loading…",
+    "willPin": "New workspaces will be pinned",
+    "willStayUnpinned": "New workspaces will stay unpinned",
+    "retry": "Retry",
+    "saving": "Saving…",
+    "autosave": "Changes save automatically.",
+    "defaultSaved": "Default saved.",
+    "ruleSaved": "{{project}}: {{rule}} saved.",
+    "connectionProblem": "Connection needs attention",
+    "connecting": "Connecting…",
+    "ready": "Ready for new workspaces",
+    "notReady": "Auto-Pin is not ready. Try reloading the plugin.",
+    "footer": "Rules apply when a workspace is created. Existing pins and restored workspaces stay as they are."
+  },
+  "errors": {
+    "settings": "Couldn't refresh your settings. Check your connection and try again.",
+    "projects": "Couldn't load projects. Check your connection and try again.",
+    "save": "Couldn't confirm that change. Check your connection, refresh, and try again."
+  }
+}

@@ -16,8 +16,9 @@ A 17-second overview of automatic pinning, project rules, and installation.
 
 ## Install
 
-Requires **Paseo 0.11 or later** and Node.js/npm on the machine running the Paseo daemon.
-For Paseo 0.9.1 to 0.10.x, install Auto-Pin 0.4.2 (see [Update](#update)).
+Requires **Paseo 0.13 or later** and Node.js/npm on the machine running the Paseo daemon.
+For Paseo 0.11 and 0.12, install Auto-Pin 0.5.2; for Paseo 0.9.1 to 0.10.x, install
+Auto-Pin 0.4.2 (see [Update](#update)).
 
 Install the reviewed version from the
 [official plugin registry](https://paseo.sh/plugins/stv1024/auto-pin):
@@ -29,13 +30,11 @@ paseo plugin add stv1024/auto-pin
 You can also install directly from npm or GitHub:
 
 ```bash
-paseo plugin install npm:paseo-auto-pin@0.5.2
+paseo plugin install npm:paseo-auto-pin@0.6.0
 paseo plugin install https://github.com/stv1024/paseo-auto-pin
 ```
 
 The registry can lag behind npm for a few days while each new version is reviewed.
-Paseo 0.11.x and 0.12.x have a [known sidebar synchronization issue](docs/paseo-workspace-race.md)
-that can temporarily hide a newly applied pin. Paseo 0.13.0 fixes it.
 
 The **Auto-Pin** row in the sidebar header shows the default switch. Click the
 switch to turn auto-pin on or off. Click the row to open the panel with project
@@ -72,6 +71,10 @@ In the Command Center, use **Auto-Pin: Toggle Default** for a quick change, or
 can also set its project's rule directly with **Auto-Pin: Always Pin This Project**,
 **Auto-Pin: Never Pin This Project**, or **Auto-Pin: This Project Follows Default**.
 
+The panel, the sidebar switch, and the commands follow Paseo's app language
+(**Settings → General → Language**). Simplified Chinese is translated; other
+languages show English. A language change applies at once, without a reload.
+
 ## Update
 
 For an installation from the registry, npm, or Git:
@@ -84,10 +87,18 @@ paseo plugin update auto-pin
 Updating from 0.3 keeps your existing on/off setting. Every project starts on
 **Follow default** until you choose otherwise.
 
-Auto-Pin **0.5.2** has been integration-tested with Paseo **0.11.1**, **0.12.0**, and **0.13.0**.
+Auto-Pin **0.6.0** has been integration-tested with Paseo **0.13.0** and **0.13.1**.
 Future versions are allowed, but compatibility still depends on Paseo keeping
-the APIs this plugin uses. Paseo 0.10 and earlier reject the 0.5 manifest.
-For Paseo 0.9.1 to 0.10.x, use Auto-Pin 0.4.2:
+the APIs this plugin uses. Paseo 0.12 and earlier reject the 0.6 manifest.
+For Paseo 0.11 and 0.12, use Auto-Pin 0.5.2, which has the same features
+in English only:
+
+```bash
+paseo plugin install npm:paseo-auto-pin@0.5.2
+```
+
+Auto-Pin 0.5 requires Paseo 0.11 or later. For Paseo 0.9.1 to 0.10.x, use
+Auto-Pin 0.4.2:
 
 ```bash
 paseo plugin install npm:paseo-auto-pin@0.4.2

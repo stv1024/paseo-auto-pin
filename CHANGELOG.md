@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.0 — Unreleased
+
+- Translate the panel, the sidebar switch, and the Command Center titles into
+  Simplified Chinese. They follow Paseo's app language and change at once when
+  it changes. Other languages show English. Search keywords stay in English, and
+  every command title still starts with "Auto-Pin".
+- Require Paseo **0.13.0** or later (`>=0.13.0`), for the runtime translation
+  API. Paseo 0.12 and earlier refuse to install this version; use Auto-Pin
+  0.5.2 there. The sidebar race of Paseo 0.11.x and 0.12.x cannot occur with
+  this version.
+- Import `Icon` from `@getpaseo/plugin/client/ui`. Paseo removes the
+  `@getpaseo/plugin/client/react-native` entry after April 20, 2027.
+- Update the Paseo SDK (`@getpaseo/plugin`, `@getpaseo/client`) to 0.13.0 and
+  `vitest` to 4.1.12.
+- Verify Paseo **0.13.0** and **0.13.1** with the integration suite and in the
+  0.13.1 web app in English and Simplified Chinese.
+- No change to pinning or settings. Settings from 0.5.x load unchanged.
+
 ## 0.5.2 — 2026-10-26
 
 - Paseo **0.13.0** fixes the sidebar race that could hide a newly applied pin

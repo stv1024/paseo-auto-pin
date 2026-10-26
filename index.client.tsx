@@ -1,27 +1,30 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
 import { autopinEnsure, autopinSetProjectRule, autopinToggle, type ProjectRule } from "./shared/contracts";
+import { messages } from "./client/messages";
 import { AutoPinPanel } from "./client/panel";
 import { AutoPinSidebarItem, SCREEN_ID } from "./client/sidebar";
 import { publishAutopinState } from "./client/state";
 
 // Set the current workspace's project rule without opening the panel.
-const PROJECT_COMMANDS: { rule: ProjectRule; title: string; keywords: string[] }[] = [
-  { rule: "always", title: "Auto-Pin: Always Pin This Project", keywords: ["always", "rule", "project"] },
-  { rule: "never", title: "Auto-Pin: Never Pin This Project", keywords: ["never", "skip", "rule", "project"] },
-  { rule: "default", title: "Auto-Pin: This Project Follows Default", keywords: ["default", "reset", "rule", "project"] },
+const PROJECT_COMMANDS: { rule: ProjectRule; keywords: string[] }[] = [
+  { rule: "always", keywords: ["always", "rule", "project"] },
+  { rule: "never", keywords: ["never", "skip", "rule", "project"] },
+  { rule: "default", keywords: ["default", "reset", "rule", "project"] },
 ];
 
 export default function contribute(plugin: PluginClientContext) {
   // The screen keeps the former surface id so saved links still open it.
+  // "Auto-Pin" is the product name, so these two titles stay untranslated.
   plugin.addScreen({ id: SCREEN_ID, title: "Auto-Pin", Component: AutoPinPanel });
   plugin.addSidebarHeaderItem({ id: "autopin", title: "Auto-Pin", Component: AutoPinSidebarItem });
   plugin.addCommandCenterItem({
     id: "toggle-autopin",
-    // Both command titles share the "Auto-Pin:" prefix on purpose: the host
-    // ranks palette matches by tier + offset within the title, so a shared
-    // prefix makes "auto"/"pin" queries tie and fall back to registration
+    // Every command title starts with "Auto-Pin" in every language on purpose:
+    // the host ranks palette matches by tier + offset within the title, so a
+    // shared prefix makes "auto"/"pin" queries tie and fall back to registration
     // order — this toggle registers first and therefore always ranks first.
-    title: "Auto-Pin: Toggle Default",
+    // Keywords stay in English, so English queries work in any app language.
+    title: messages.message("commands.toggleDefault"),
     icon: "Pin",
     keywords: ["pin", "autopin", "workspace", "auto", "toggle", "default", "enable", "disable"],
     context: "global",
@@ -34,7 +37,7 @@ export default function contribute(plugin: PluginClientContext) {
   });
   plugin.addCommandCenterItem({
     id: "open-autopin",
-    title: "Auto-Pin: Open Panel",
+    title: messages.message("commands.openPanel"),
     icon: "Pin",
     keywords: ["pin", "autopin", "workspace", "auto", "panel", "settings", "status"],
     context: "global",
@@ -42,10 +45,10 @@ export default function contribute(plugin: PluginClientContext) {
       openScreen({ screenId: SCREEN_ID });
     },
   });
-  for (const { rule, title, keywords } of PROJECT_COMMANDS) {
+  for (const { rule, keywords } of PROJECT_COMMANDS) {
     plugin.addCommandCenterItem({
       id: `project-${rule}`,
-      title,
+      title: messages.message(`commands.${rule}`),
       icon: "Pin",
       keywords: ["pin", "autopin", "workspace", "auto", ...keywords],
       context: "workspace",

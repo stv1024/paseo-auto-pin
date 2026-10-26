@@ -8,8 +8,8 @@ Auto-Pin pins each new workspace as soon as Paseo creates it, so it appears in t
 
 Rules apply to new workspaces in a project, worktrees included. Set them in the Auto-Pin panel, which lists your Paseo projects with search. From the Command Center you can also toggle the default, or set the rule for the current workspace's project without opening the panel.
 
+The panel, the sidebar switch, and the commands follow Paseo's app language. Simplified Chinese is translated; other languages show English.
+
 Auto-Pin only acts when a workspace is created. Existing workspaces are unchanged, restoring an archived workspace does not pin it again, and the plugin never unpins anything. You can still pin and unpin workspaces yourself. To pause it completely, disable the plugin.
 
 The switch and project rules are stored in `plugin-data/auto-pin.json` in the Paseo home directory and are shared by every client connected to that daemon. To pin a workspace, the plugin opens a short connection to the daemon endpoint configured in Paseo's `config.json`. If that endpoint is not reachable from the daemon process, the pin fails and the error appears in the plugin log. The plugin makes no other network connections.
-
-On Paseo 0.11 and 0.12, a new pin can briefly disappear from the sidebar when the workspace starts with an agent. The daemon keeps the pin, and the row returns on the next sidebar update. Paseo 0.13.0 fixes this.

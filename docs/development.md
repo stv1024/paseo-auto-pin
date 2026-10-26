@@ -1,13 +1,15 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.5.2 requires Paseo **>=0.11.0**, with no upper version limit. The
-manifest uses `name`, `icon`, and `media`, and the client uses `addScreen` and
-`addSidebarHeaderItem`; Paseo 0.10 and earlier reject or lack these. The
-integration suite has been verified with Paseo **0.11.1**, **0.12.0**, and
-**0.13.0**. Later stable versions may load without changing the manifest, but
-this is not a guarantee that future Paseo API changes will remain compatible.
+Auto-Pin 0.6.0 requires Paseo **>=0.13.0**, with no upper version limit. The
+client uses the runtime translation API (`defineTranslations`, `useTranslation`,
+and translated command titles) and imports `Icon` from
+`@getpaseo/plugin/client/ui`; Paseo 0.12 and earlier lack these. The
+integration suite has been verified with Paseo **0.13.0** and **0.13.1**. Later
+stable versions may load without changing the manifest, but this is not a
+guarantee that future Paseo API changes will remain compatible. Auto-Pin 0.5.2
+remains the release for Paseo 0.11 and 0.12.
 
-Both Paseo SDK dependencies are pinned to **0.11.1** for repeatable builds; these
+Both Paseo SDK dependencies are pinned to **0.13.0** for repeatable builds; these
 dependency pins do not restrict the host's version. The host supplies React and
 React Native at runtime. Keep the SDK versions in sync and rerun integration
 checks against both the minimum supported host and the latest stable host when
@@ -51,7 +53,7 @@ Release sequence:
 1. Bump `version` in `package.json` and add the changelog section.
 2. Run the checks and pack the tarball (below).
 3. Commit, push `main`, tag the release commit, and push the tag:
-   `git tag -a v0.5.2 -m "Auto-Pin 0.5.2" && git push origin v0.5.2`.
+   `git tag -a v0.6.0 -m "Auto-Pin 0.6.0" && git push origin v0.6.0`.
    The tag push starts the workflow. A tag that does not match the packed
    version fails the run before it reaches npm.
 4. Create the GitHub release from that tag.
@@ -139,6 +141,30 @@ refresh settings and the project list every 10 seconds; **Refresh** checks
 immediately. Revisions prevent a delayed read from replacing newer settings.
 Read errors and save errors are shown separately.
 
+### Translations
+
+Every visible string except the product name "Auto-Pin" comes from
+`client/locales/en.json`, with a Simplified Chinese copy in
+`client/locales/zh-CN.json`. `client/messages.ts` registers both with
+`defineTranslations`. Paseo selects the resource from its app language and
+falls back to English for other languages and for missing keys. Components
+read text with `useTranslation(messages)`, so a language change re-renders an
+open panel and the sidebar switch. Command titles use `messages.message(key)`,
+which Paseo resolves when it renders the Command Center.
+
+When the client module loads, the SDK throws if `zh-CN.json` has a key that
+`en.json` lacks, or a message whose placeholders differ from the English one. A
+command title with an unknown key throws too. Either error stops the whole
+client, not one label. `npm test` loads the resources, checks that
+`zh-CN.json` has exactly the English keys, and checks that every command title
+starts with "Auto-Pin". Keep the product name first: the Command Center ranks
+matches by their position in the title, so all languages sort the plugin's
+commands together. Search keywords stay in English.
+
+Keep messages as data and translate them when they render. For example, the
+panel stores the last saved rule, not a sentence, so its status line follows a
+language change.
+
 Settings are cached by the plugin process. If you edit the JSON manually, reload
 the plugin, then reopen the panel. Prefer the panel for normal changes.
 
@@ -179,7 +205,7 @@ For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.13.0
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.13.1
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 
@@ -207,7 +233,12 @@ you want to test.
 Before a release, also check the panel at desktop and narrow widths: change
 each rule, toggle the default, search, reconnect, and confirm failures leave the
 previous selection visible. Check the Command Center with the panel open, and
-flip the sidebar header switch while the panel is open and closed.
+flip the sidebar header switch while the panel is open and closed. Plugin
+commands appear in the Command Center only while a workspace is open. Repeat the
+check in Simplified Chinese: set **Settings → General → Language** to 简体中文,
+or open the web app in a browser whose language is `zh-CN` while the setting is
+**System**. Switch back to English and confirm that the panel, the sidebar
+switch, and the command titles change without a reload.
 
 ## Files to start with
 
@@ -219,6 +250,7 @@ flip the sidebar header switch while the panel is open and closed.
 | `server/handlers.ts` | Settings and project RPC handlers. |
 | `shared/contracts.ts` | Shared RPC schemas and types. |
 | `client/panel.tsx` | Settings screen. |
+| `client/messages.ts`, `client/locales/` | Translated UI text. |
 | `client/sidebar.tsx` | Sidebar header row with the default switch. |
 | `client/state.ts` | Shared client state and revision handling. |
 | `index.server.ts` / `index.client.tsx` | Register contributions. |

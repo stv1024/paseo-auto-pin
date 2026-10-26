@@ -1,8 +1,9 @@
-import { useRpc, type PluginSidebarItemProps } from "@getpaseo/plugin/client";
+import { useRpc, useTranslation, type PluginSidebarItemProps } from "@getpaseo/plugin/client";
 import { SidebarRow } from "@getpaseo/plugin/client/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { autopinEnsure, autopinToggle } from "../shared/contracts";
+import { messages } from "./messages";
 import { publishAutopinState, useAutopinState } from "./state";
 
 export const SCREEN_ID = "autopin";
@@ -13,6 +14,7 @@ export function AutoPinSidebarItem({ theme, currentScreen, openScreen }: PluginS
   const ensure = useRpc(autopinEnsure);
   const toggle = useRpc(autopinToggle);
   const { enabled } = useAutopinState();
+  const { t } = useTranslation(messages);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const colors = theme.colors;
@@ -42,14 +44,14 @@ export function AutoPinSidebarItem({ theme, currentScreen, openScreen }: PluginS
   const known = enabled !== null;
   const trailing = (
     <Pressable accessibilityRole="switch"
-      accessibilityLabel="Pin new workspaces by default"
+      accessibilityLabel={t("switch.label")}
       accessibilityState={{ checked: enabled === true, disabled: busy || !known }}
       aria-checked={enabled === true}
       disabled={busy || !known}
       onPress={() => void flip()}
       hitSlop={6}
       style={({ pressed }) => [styles.toggle, { opacity: pressed || busy ? 0.6 : 1 }]}>
-      <Text style={[styles.state, { color: colors.foregroundMuted }]}>{known ? enabled ? "On" : "Off" : "…"}</Text>
+      <Text style={[styles.state, { color: colors.foregroundMuted }]}>{known ? t(enabled ? "switch.on" : "switch.off") : "…"}</Text>
       <View style={[styles.track, {
         backgroundColor: enabled ? colors.accent : colors.surface2,
         borderColor: enabled ? colors.accent : colors.border,

@@ -221,8 +221,10 @@ and can interfere with manual pin changes. The diagnostic's timing injection
 is isolated test code and is not loaded by either plugin entry point.
 
 Paseo 0.13.0 is the first verified fixed version (see
-[Released fix](#released-fix-paseo-0130)). The plugin still supports Paseo
-0.11.x and 0.12.x, where the race remains; tell users there to update Paseo.
+[Released fix](#released-fix-paseo-0130)). Auto-Pin 0.6.0 and later require
+Paseo 0.13.0, so they do not run on an affected host. Auto-Pin 0.5.2 remains the
+release for Paseo 0.11.x and 0.12.x, where the race remains; tell users there to
+update Paseo.
 Keep the historical reproduction versioned: it shows the old wire ordering,
 which is still sent in 0.13.0. If a later Paseo release changes the creation
 flow or the workspace replica, run the `--ui` check again.

@@ -1,19 +1,21 @@
-import { useRpc, type PluginScreenProps } from "@getpaseo/plugin/client";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { useRpc, useTranslation, type PluginScreenProps } from "@getpaseo/plugin/client";
+import { Icon } from "@getpaseo/plugin/client/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   autopinEnsure, autopinProjects, autopinSetProjectRule, autopinToggle,
   type AutopinProject, type AutopinState, type ProjectRule,
 } from "../shared/contracts";
+import { messages } from "./messages";
 import { publishAutopinState, useAutopinState } from "./state";
 
 const POLL_MS = 10_000;
-const RULES: { value: ProjectRule; label: string }[] = [
-  { value: "default", label: "Follow default" },
-  { value: "always", label: "Always" },
-  { value: "never", label: "Never" },
-];
+const RULES: ProjectRule[] = ["default", "always", "never"];
+
+// Messages are kept as data and translated at render, so a language change
+// also updates a message that is already shown.
+type ReadError = "settings" | "projects";
+type Feedback = { kind: "default" } | { kind: "rule"; project: string; rule: ProjectRule };
 
 export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
   const ensure = useRpc(autopinEnsure);
@@ -21,11 +23,12 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
   const toggle = useRpc(autopinToggle);
   const setRule = useRpc(autopinSetProjectRule);
   const { enabled, running, projectRules } = useAutopinState();
+  const { t } = useTranslation(messages);
   const [projects, setProjects] = useState<AutopinProject[] | null>(null);
   const [query, setQuery] = useState("");
-  const [readError, setReadError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState("");
+  const [readError, setReadError] = useState<ReadError | null>(null);
+  const [saveError, setSaveError] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const busyRef = useRef(false);
@@ -45,11 +48,7 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
       if (generation !== generationRef.current) return;
       if (settings.status === "fulfilled") publishAutopinState(settings.value);
       if (directory.status === "fulfilled") setProjects(directory.value.projects);
-      setReadError(settings.status === "rejected"
-        ? "Couldn't refresh your settings. Check your connection and try again."
-        : directory.status === "rejected"
-          ? "Couldn't load projects. Check your connection and try again."
-          : null);
+      setReadError(settings.status === "rejected" ? "settings" : directory.status === "rejected" ? "projects" : null);
     } finally {
       if (generation === generationRef.current) {
         pollingRef.current = false;
@@ -73,21 +72,19 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
     return () => { mountedRef.current = false; };
   }, []);
 
-  const save = async (operation: () => Promise<AutopinState>, message: string) => {
+  const save = async (operation: () => Promise<AutopinState>, done: Feedback) => {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
-    setFeedback("");
+    setFeedback(null);
     try {
       const result = await operation();
       if (!mountedRef.current) return;
       publishAutopinState(result);
-      setSaveError(null);
-      setFeedback(message);
+      setSaveError(false);
+      setFeedback(done);
     } catch {
-      if (mountedRef.current) {
-        setSaveError("Couldn't confirm that change. Check your connection, refresh, and try again.");
-      }
+      if (mountedRef.current) setSaveError(true);
     } finally {
       busyRef.current = false;
       if (mountedRef.current) setBusy(false);
@@ -102,6 +99,10 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
   const muted = { color: colors.foregroundMuted };
   const foreground = { color: colors.foreground };
   const card = { backgroundColor: colors.surface1, borderColor: colors.border };
+  const status = busy ? t("panel.saving")
+    : feedback === null ? t("panel.autosave")
+    : feedback.kind === "default" ? t("panel.defaultSaved")
+    : t("panel.ruleSaved", { project: feedback.project, rule: t(`rules.${feedback.rule}`) });
 
   return (
     <ScrollView testID="auto-pin-panel" style={{ flex: 1, backgroundColor: colors.surface0 }}
@@ -112,26 +113,26 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
           <Text accessibilityRole="header" style={[styles.title, foreground]}>Auto-Pin</Text>
         </View>
         <Text style={[styles.description, muted]}>
-          Keep new workspaces within reach. Choose a default, then make exceptions for individual projects.
+          {t("panel.intro")}
         </Text>
       </View>
 
       <View style={[styles.card, card]}>
         <Pressable accessibilityRole="switch"
-          accessibilityLabel="Pin new workspaces by default"
+          accessibilityLabel={t("switch.label")}
           accessibilityState={{ checked: enabled === true, disabled }}
           aria-checked={enabled === true}
           disabled={disabled}
-          onPress={() => void save(() => toggle({}), "Default saved.")}
+          onPress={() => void save(() => toggle({}), { kind: "default" })}
           style={({ pressed }) => [styles.defaultRow, { opacity: pressed || disabled ? 0.65 : 1 }]}>
           <View style={styles.defaultCopy}>
-            <Text style={[styles.label, foreground]}>Pin new workspaces by default</Text>
+            <Text style={[styles.label, foreground]}>{t("switch.label")}</Text>
             <Text style={[styles.small, muted]}>
-              {known ? enabled ? "On for projects without an override." : "Off for projects without an override." : "Loading your settings…"}
+              {known ? t(enabled ? "panel.defaultOn" : "panel.defaultOff") : t("panel.loadingSettings")}
             </Text>
           </View>
           <View style={styles.titleRow}>
-            <Text style={[styles.label, foreground]}>{known ? enabled ? "On" : "Off" : "…"}</Text>
+            <Text style={[styles.label, foreground]}>{known ? t(enabled ? "switch.on" : "switch.off") : "…"}</Text>
             <View style={[styles.switchTrack, { backgroundColor: enabled ? colors.accent : colors.surface2,
               borderColor: enabled ? colors.accent : colors.border, alignItems: enabled ? "flex-end" : "flex-start" }]}>
               <View style={[styles.switchThumb, { backgroundColor: enabled ? colors.accentForeground : colors.foregroundMuted }]} />
@@ -139,38 +140,38 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
           </View>
         </Pressable>
         <Text style={[styles.defaultHint, styles.small, muted, { borderColor: colors.border }]}>
-          Projects set to Always or Never override this default.
+          {t("panel.defaultHint")}
         </Text>
       </View>
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text accessibilityRole="header" style={[styles.sectionTitle, foreground]}>Projects</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Refresh projects and settings"
+          <Text accessibilityRole="header" style={[styles.sectionTitle, foreground]}>{t("panel.projects")}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("panel.refreshLabel")}
             disabled={refreshing} onPress={() => void refresh()} style={styles.textButton}>
             <Icon name="RefreshCw" size={14} color={colors.foregroundMuted} />
-            <Text style={[styles.small, muted]}>{refreshing ? "Refreshing…" : "Refresh"}</Text>
+            <Text style={[styles.small, muted]}>{t(refreshing ? "panel.refreshing" : "panel.refresh")}</Text>
           </Pressable>
         </View>
         <Text style={[styles.small, muted]}>
-          Always pins new workspaces in that project. Never leaves them unpinned.
+          {t("panel.rulesHint")}
         </Text>
         {projects && projects.length > 0 ? (
-          <TextInput accessibilityLabel="Search projects" placeholder="Search projects"
+          <TextInput accessibilityLabel={t("panel.search")} placeholder={t("panel.search")}
             placeholderTextColor={colors.foregroundMuted} value={query} onChangeText={setQuery}
             autoCorrect={false} autoCapitalize="none"
             style={[styles.search, foreground, card]} />
         ) : null}
 
         {projects === null ? (
-          <Text style={[styles.empty, muted]}>{readError ? "Projects are unavailable." : "Loading projects…"}</Text>
+          <Text style={[styles.empty, muted]}>{t(readError ? "panel.projectsUnavailable" : "panel.loadingProjects")}</Text>
         ) : projects.length === 0 ? (
           <View style={[styles.emptyCard, card]}>
-            <Text style={[styles.label, foreground]}>Your projects will appear here</Text>
-            <Text style={[styles.small, muted]}>Add a project in Paseo to give it its own auto-pin rule.</Text>
+            <Text style={[styles.label, foreground]}>{t("panel.emptyTitle")}</Text>
+            <Text style={[styles.small, muted]}>{t("panel.emptyHint")}</Text>
           </View>
         ) : filtered?.length === 0 ? (
-          <Text style={[styles.empty, muted]}>No projects match “{query.trim()}”.</Text>
+          <Text style={[styles.empty, muted]}>{t("panel.noMatch", { query: query.trim() })}</Text>
         ) : (
           <View style={[styles.projectList, card]}>
             {filtered?.map((project, index) => {
@@ -185,30 +186,30 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
                     <Text selectable style={[styles.path, muted]}>{project.path}</Text>
                   </View>
                   <View style={styles.ruleControls}>
-                    <View accessibilityRole="radiogroup" accessibilityLabel={`${project.name} auto-pin rule`}
+                    <View accessibilityRole="radiogroup" accessibilityLabel={t("panel.ruleGroup", { project: project.name })}
                       style={[styles.ruleGroup, { backgroundColor: colors.surface0, borderColor: colors.border }]}>
                       {RULES.map((option) => (
-                        <Pressable key={option.value} accessibilityRole="radio"
-                          accessibilityLabel={`${project.name}: ${option.label}`}
-                          accessibilityState={{ checked: rule === option.value, disabled }}
-                          aria-checked={rule === option.value}
+                        <Pressable key={option} accessibilityRole="radio"
+                          accessibilityLabel={t("panel.ruleOption", { project: project.name, rule: t(`rules.${option}`) })}
+                          accessibilityState={{ checked: rule === option, disabled }}
+                          aria-checked={rule === option}
                           disabled={disabled}
-                          onPress={() => rule !== option.value && void save(
-                            () => setRule({ projectId: project.id, rule: option.value }),
-                            `${project.name}: ${option.label} saved.`,
+                          onPress={() => rule !== option && void save(
+                            () => setRule({ projectId: project.id, rule: option }),
+                            { kind: "rule", project: project.name, rule: option },
                           )}
                           style={({ pressed }) => [styles.ruleButton, {
-                            backgroundColor: rule === option.value ? colors.accent : "transparent",
+                            backgroundColor: rule === option ? colors.accent : "transparent",
                             opacity: pressed || busy ? 0.65 : 1,
                           }]}>
                           <Text style={[styles.ruleLabel, {
-                            color: rule === option.value ? colors.accentForeground : colors.foregroundMuted,
-                          }]}>{option.label}</Text>
+                            color: rule === option ? colors.accentForeground : colors.foregroundMuted,
+                          }]}>{t(`rules.${option}`)}</Text>
                         </Pressable>
                       ))}
                     </View>
                     <Text style={[styles.small, muted]}>
-                      {!known ? "Loading…" : effective ? "New workspaces will be pinned" : "New workspaces will stay unpinned"}
+                      {t(!known ? "panel.loading" : effective ? "panel.willPin" : "panel.willStayUnpinned")}
                     </Text>
                   </View>
                 </View>
@@ -218,17 +219,17 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
         )}
       </View>
 
-      {saveError ? <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger }]}>{saveError}</Text> : null}
+      {saveError ? <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger }]}>{t("errors.save")}</Text> : null}
       {readError ? (
         <View style={styles.errorRow}>
-          <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger, flex: 1 }]}>{readError}</Text>
+          <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger, flex: 1 }]}>{t(`errors.${readError}`)}</Text>
           <Pressable accessibilityRole="button" disabled={refreshing} onPress={() => void refresh()} style={styles.textButton}>
-            <Text style={[styles.label, { color: colors.accent }]}>Retry</Text>
+            <Text style={[styles.label, { color: colors.accent }]}>{t("panel.retry")}</Text>
           </Pressable>
         </View>
       ) : null}
       <Text accessibilityLiveRegion="polite" style={[styles.small, muted]}>
-        {busy ? "Saving…" : feedback || "Changes save automatically."}
+        {status}
       </Text>
 
       <View style={[styles.footer, { borderColor: colors.border }]}>
@@ -236,11 +237,11 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
           <Icon name={running ? "Check" : "CircleDashed"} size={14}
             color={readError ? colors.statusWarning : running ? colors.statusSuccess : colors.foregroundMuted} />
           <Text style={[styles.small, muted]}>
-            {readError ? "Connection needs attention" : running === null ? "Connecting…" : running ? "Ready for new workspaces" : "Auto-Pin is not ready. Try reloading the plugin."}
+            {t(readError ? "panel.connectionProblem" : running === null ? "panel.connecting" : running ? "panel.ready" : "panel.notReady")}
           </Text>
         </View>
         <Text style={[styles.small, muted]}>
-          Rules apply when a workspace is created. Existing pins and restored workspaces stay as they are.
+          {t("panel.footer")}
         </Text>
       </View>
     </ScrollView>

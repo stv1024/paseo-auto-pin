@@ -1,0 +1,57 @@
+{
+  "commands": {
+    "toggleDefault": "Auto-Pin：切换默认设置",
+    "openPanel": "Auto-Pin：打开面板",
+    "always": "Auto-Pin：始终置顶此项目",
+    "never": "Auto-Pin：从不置顶此项目",
+    "default": "Auto-Pin：此项目跟随默认设置"
+  },
+  "switch": {
+    "label": "默认置顶新工作区",
+    "on": "开",
+    "off": "关"
+  },
+  "rules": {
+    "default": "跟随默认",
+    "always": "始终",
+    "never": "从不"
+  },
+  "panel": {
+    "intro": "让新工作区保持在手边。先选择默认设置，再为个别项目设置例外。",
+    "defaultOn": "对没有单独规则的项目开启。",
+    "defaultOff": "对没有单独规则的项目关闭。",
+    "loadingSettings": "正在加载设置…",
+    "defaultHint": "设为“始终”或“从不”的项目不使用这个默认设置。",
+    "projects": "项目",
+    "refreshLabel": "刷新项目和设置",
+    "refresh": "刷新",
+    "refreshing": "正在刷新…",
+    "rulesHint": "“始终”会置顶该项目的新工作区，“从不”会让它们保持不置顶。",
+    "search": "搜索项目",
+    "projectsUnavailable": "无法显示项目。",
+    "loadingProjects": "正在加载项目…",
+    "emptyTitle": "你的项目会显示在这里",
+    "emptyHint": "在 Paseo 中添加项目后，可以为它设置单独的自动置顶规则。",
+    "noMatch": "没有与“{{query}}”匹配的项目。",
+    "ruleGroup": "{{project}} 的自动置顶规则",
+    "ruleOption": "{{project}}：{{rule}}",
+    "loading": "加载中…",
+    "willPin": "新工作区将被置顶",
+    "willStayUnpinned": "新工作区将保持不置顶",
+    "retry": "重试",
+    "saving": "正在保存…",
+    "autosave": "更改会自动保存。",
+    "defaultSaved": "已保存默认设置。",
+    "ruleSaved": "已保存 {{project}}：{{rule}}。",
+    "connectionProblem": "连接出现问题",
+    "connecting": "正在连接…",
+    "ready": "已准备好处理新工作区",
+    "notReady": "Auto-Pin 尚未就绪。请尝试重新加载插件。",
+    "footer": "规则在创建工作区时生效。已有的置顶和恢复的工作区保持不变。"
+  },
+  "errors": {
+    "settings": "无法刷新设置。请检查连接后重试。",
+    "projects": "无法加载项目。请检查连接后重试。",
+    "save": "无法确认这项更改。请检查连接，刷新后重试。"
+  }
+}
