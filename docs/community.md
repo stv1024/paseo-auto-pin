@@ -25,6 +25,10 @@ The recording shows a newly created workspace appearing in **Pinned** automatica
 - [Auto-Pin 0.5.1 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.5.1)
   on 2026-10-25: a packaging release that ships `npm-shrinkwrap.json` and clears
   the registry hold on 0.5.0 ([getpaseo/plugins#237](https://github.com/getpaseo/plugins/pull/237)).
+- [Auto-Pin 0.5.2 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.5.2)
+  on 2026-10-26: verifies the Paseo 0.13.0 race fix ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758)),
+  locks `zod` 4.6.7, and adds a Simplified Chinese listing. It is the first release
+  published by the Trusted Publishing workflow.
 
 ## Where to check feedback
 
