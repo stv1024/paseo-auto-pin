@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 — Unreleased
+## 0.6.0 — 2026-10-27
 
 - Translate the panel, the sidebar switch, and the Command Center titles into
   Simplified Chinese. They follow Paseo's app language and change at once when
@@ -14,8 +14,8 @@
   `@getpaseo/plugin/client/react-native` entry after April 20, 2027.
 - Update the Paseo SDK (`@getpaseo/plugin`, `@getpaseo/client`) to 0.13.0 and
   `vitest` to 4.1.12.
-- Verify Paseo **0.13.0** and **0.13.1** with the integration suite and in the
-  0.13.1 web app in English and Simplified Chinese.
+- Verify Paseo **0.13.0**, **0.13.1**, and **0.13.2** with the integration
+  suite, and check the 0.13.1 web app in English and Simplified Chinese.
 - No change to pinning or settings. Settings from 0.5.x load unchanged.
 
 ## 0.5.2 — 2026-10-26

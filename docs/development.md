@@ -4,10 +4,10 @@ Auto-Pin 0.6.0 requires Paseo **>=0.13.0**, with no upper version limit. The
 client uses the runtime translation API (`defineTranslations`, `useTranslation`,
 and translated command titles) and imports `Icon` from
 `@getpaseo/plugin/client/ui`; Paseo 0.12 and earlier lack these. The
-integration suite has been verified with Paseo **0.13.0** and **0.13.1**. Later
-stable versions may load without changing the manifest, but this is not a
-guarantee that future Paseo API changes will remain compatible. Auto-Pin 0.5.2
-remains the release for Paseo 0.11 and 0.12.
+integration suite has been verified with Paseo **0.13.0**, **0.13.1**, and
+**0.13.2**. Later stable versions may load without changing the manifest, but
+this is not a guarantee that future Paseo API changes will remain compatible.
+Auto-Pin 0.5.2 remains the release for Paseo 0.11 and 0.12.
 
 Both Paseo SDK dependencies are pinned to **0.13.0** for repeatable builds; these
 dependency pins do not restrict the host's version. The host supplies React and
@@ -205,7 +205,7 @@ For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.13.1
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.13.2
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 
