@@ -28,7 +28,12 @@ The recording shows a newly created workspace appearing in **Pinned** automatica
 - [Auto-Pin 0.5.2 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.5.2)
   on 2026-10-26: verifies the Paseo 0.13.0 race fix ([getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758)),
   locks `zod` 4.6.7, and adds a Simplified Chinese listing. It is the first release
-  published by the Trusted Publishing workflow.
+  published by the Trusted Publishing workflow. The registry listed it the same day
+  ([getpaseo/plugins#1223](https://github.com/getpaseo/plugins/pull/1223)).
+- [Auto-Pin 0.6.0 release](https://github.com/stv1024/paseo-auto-pin/releases/tag/v0.6.0)
+  on 2026-10-27: translates the panel, the sidebar switch, and the commands into
+  Simplified Chinese, and requires Paseo 0.13.0. Auto-Pin 0.5.2 remains the release
+  for Paseo 0.11 and 0.12.
 
 ## Where to check feedback
 
