@@ -12,4 +12,4 @@ The panel, the sidebar switch, and the commands follow Paseo's app language. Sim
 
 Auto-Pin only acts when a workspace is created. Existing workspaces are unchanged, restoring an archived workspace does not pin it again, and the plugin never unpins anything. You can still pin and unpin workspaces yourself. To pause it completely, disable the plugin.
 
-The switch and project rules are stored in `plugin-data/auto-pin.json` in the Paseo home directory and are shared by every client connected to that daemon. To pin a workspace, the plugin opens a short connection to the daemon endpoint configured in Paseo's `config.json`. If that endpoint is not reachable from the daemon process, the pin fails and the error appears in the plugin log. The plugin makes no other network connections.
+The switch and project rules are Paseo plugin settings on the daemon, shared by every client connected to it. A change on one client shows on the others at once. The plugin pins through Paseo's own API and makes no network connections.

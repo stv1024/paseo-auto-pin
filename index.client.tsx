@@ -1,9 +1,9 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
-import { autopinEnsure, autopinSetProjectRule, autopinToggle, type ProjectRule } from "./shared/contracts";
+import { withRule, type ProjectRule } from "./shared/settings";
 import { messages } from "./client/messages";
 import { AutoPinPanel } from "./client/panel";
+import { importLegacy, updateSettings } from "./client/settings";
 import { AutoPinSidebarItem, SCREEN_ID } from "./client/sidebar";
-import { publishAutopinState } from "./client/state";
 
 // Set the current workspace's project rule without opening the panel.
 const PROJECT_COMMANDS: { rule: ProjectRule; keywords: string[] }[] = [
@@ -28,11 +28,8 @@ export default function contribute(plugin: PluginClientContext) {
     icon: "Pin",
     keywords: ["pin", "autopin", "workspace", "auto", "toggle", "default", "enable", "disable"],
     context: "global",
-    async onSelect({ rpc }) {
-      const result = await rpc(autopinToggle, {});
-      // Feed the shared client store so an open Auto-Pin panel reflects the
-      // new state immediately instead of waiting for its reconcile poll.
-      publishAutopinState(result);
+    onSelect({ rpc }) {
+      return updateSettings(rpc, (values) => ({ ...values, enabled: !values.enabled }));
     },
   });
   plugin.addCommandCenterItem({
@@ -52,14 +49,11 @@ export default function contribute(plugin: PluginClientContext) {
       icon: "Pin",
       keywords: ["pin", "autopin", "workspace", "auto", ...keywords],
       context: "workspace",
-      async onSelect({ rpc, workspace }) {
-        publishAutopinState(await rpc(autopinSetProjectRule, { projectId: workspace.projectId, rule }));
+      onSelect({ rpc, workspace }) {
+        return updateSettings(rpc, (values) => withRule(values, workspace.projectId, rule));
       },
     });
   }
-  let disposed = false;
-  void plugin.rpc(autopinEnsure, {}).then((result) => {
-    if (!disposed) publishAutopinState(result);
-  }).catch(() => { /* The panel reports connection failures and retries. */ });
-  return () => { disposed = true; };
+  importLegacy(plugin.rpc).catch((error: unknown) => console.warn("[auto-pin] cannot import the old settings:", error));
+  return () => {};
 }

@@ -16,9 +16,9 @@ A 17-second overview of automatic pinning, project rules, and installation.
 
 ## Install
 
-Requires **Paseo 0.13 or later** and Node.js/npm on the machine running the Paseo daemon.
-For Paseo 0.11 and 0.12, install Auto-Pin 0.5.2; for Paseo 0.9.1 to 0.10.x, install
-Auto-Pin 0.4.2 (see [Update](#update)).
+Requires **Paseo 0.16 or later**. For Paseo 0.13 to 0.15, install Auto-Pin 0.6.0;
+for Paseo 0.11 and 0.12, Auto-Pin 0.5.2; for Paseo 0.9.1 to 0.10.x, Auto-Pin 0.4.2
+(see [Update](#update)).
 
 Install the reviewed version from the
 [official plugin registry](https://paseo.sh/plugins/stv1024/auto-pin):
@@ -30,7 +30,7 @@ paseo plugin add stv1024/auto-pin
 You can also install directly from npm or GitHub:
 
 ```bash
-paseo plugin install npm:paseo-auto-pin@0.6.0
+paseo plugin install npm:paseo-auto-pin@0.7.0
 paseo plugin install https://github.com/stv1024/paseo-auto-pin
 ```
 
@@ -60,6 +60,7 @@ Rules apply to new workspaces belonging to that project, including worktrees.
 ### A few things to know
 
 - Changes save automatically and are shared by clients connected to the same daemon.
+  A change on one client shows on the others at once.
 - Rules only affect workspaces created afterward. Existing pins stay as they are.
 - Restoring an archived workspace does not pin it again.
 - Auto-Pin never removes a pin. You can still pin or unpin workspaces yourself.
@@ -84,12 +85,19 @@ paseo plugin update auto-pin --check
 paseo plugin update auto-pin
 ```
 
-Updating from 0.3 keeps your existing on/off setting. Every project starts on
-**Follow default** until you choose otherwise.
+Updating keeps your default and your project rules. Auto-Pin 0.7 moves them
+from `plugin-data/auto-pin.json` into Paseo's plugin settings the first time a
+Paseo app connects, then deletes the old file.
 
-Auto-Pin **0.6.0** has been integration-tested with Paseo **0.13.0**,
-**0.13.1**, and **0.13.2**. Future versions are allowed, but compatibility still
-depends on Paseo keeping the APIs this plugin uses. Paseo 0.12 and earlier reject the 0.6 manifest.
+Auto-Pin **0.7.0** has been integration-tested with Paseo **0.16.1**. Future
+versions are allowed, but compatibility still depends on Paseo keeping the APIs
+this plugin uses. Paseo 0.15 and earlier reject the 0.7 manifest. For Paseo 0.13
+to 0.15, use Auto-Pin 0.6.0, which has the same features:
+
+```bash
+paseo plugin install npm:paseo-auto-pin@0.6.0
+```
+
 For Paseo 0.11 and 0.12, use Auto-Pin 0.5.2, which has the same features
 in English only:
 
@@ -110,16 +118,6 @@ For Paseo 0.8, use Auto-Pin 0.2.0; for Paseo 0.7, use 0.1.0.
 ## Need a hand?
 
 If a new workspace is not pinned, check its project rule and the default switch.
-If you just changed a setting on another device, press **Refresh** in the panel.
-
-If a workspace appears pinned, disappears from Pinned, and returns later on
-Paseo 0.9.2 to 0.12.x, update Paseo to 0.13.0 or later. See the
-[known issue and its fix](docs/paseo-workspace-race.md).
-The daemon retains the pin; updating or reloading Auto-Pin does not fix this
-host issue. The panel's **Refresh** button only refreshes plugin settings and
-projects, so it does not repair the sidebar state.
-Upstream fix: [getpaseo/paseo#7758](https://github.com/getpaseo/paseo/pull/7758),
-for [getpaseo/paseo#5447](https://github.com/getpaseo/paseo/issues/5447).
 
 For errors or unexpected behavior, [open an issue](https://github.com/stv1024/paseo-auto-pin/issues).
 Include your Paseo and Auto-Pin versions, the rule you selected, and what happened.

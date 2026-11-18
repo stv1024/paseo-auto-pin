@@ -23,13 +23,8 @@
     "loadingSettings": "Loading your settings…",
     "defaultHint": "Projects set to Always or Never override this default.",
     "projects": "Projects",
-    "refreshLabel": "Refresh projects and settings",
-    "refresh": "Refresh",
-    "refreshing": "Refreshing…",
     "rulesHint": "Always pins new workspaces in that project. Never leaves them unpinned.",
     "search": "Search projects",
-    "projectsUnavailable": "Projects are unavailable.",
-    "loadingProjects": "Loading projects…",
     "emptyTitle": "Your projects will appear here",
     "emptyHint": "Add a project in Paseo to give it its own auto-pin rule.",
     "noMatch": "No projects match “{{query}}”.",
@@ -43,15 +38,12 @@
     "autosave": "Changes save automatically.",
     "defaultSaved": "Default saved.",
     "ruleSaved": "{{project}}: {{rule}} saved.",
-    "connectionProblem": "Connection needs attention",
-    "connecting": "Connecting…",
-    "ready": "Ready for new workspaces",
-    "notReady": "Auto-Pin is not ready. Try reloading the plugin.",
-    "footer": "Rules apply when a workspace is created. Existing pins and restored workspaces stay as they are."
+    "footer": "Rules apply when a workspace is created. Existing pins and restored workspaces stay as they are.",
+    "resetSettings": "Reset to defaults"
   },
   "errors": {
-    "settings": "Couldn't refresh your settings. Check your connection and try again.",
-    "projects": "Couldn't load projects. Check your connection and try again.",
-    "save": "Couldn't confirm that change. Check your connection, refresh, and try again."
+    "settings": "Could not read your settings. Check your connection and try again.",
+    "invalid": "The saved settings are not valid. Reset them to the defaults to continue.",
+    "save": "Could not save that change. Check your connection and try again."
   }
 }

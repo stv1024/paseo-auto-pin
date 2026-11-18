@@ -1,101 +1,40 @@
-import { useRpc, useTranslation, type PluginScreenProps } from "@getpaseo/plugin/client";
+import { useProject, useProjects, useSettings, useTranslation, type PluginScreenProps, type ProjectRef } from "@getpaseo/plugin/client";
 import { Icon } from "@getpaseo/plugin/client/ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import {
-  autopinEnsure, autopinProjects, autopinSetProjectRule, autopinToggle,
-  type AutopinProject, type AutopinState, type ProjectRule,
-} from "../shared/contracts";
+import { autopinSettings, ruleFor, shouldPin, withRule, type AutopinValues, type ProjectRule } from "../shared/settings";
 import { messages } from "./messages";
-import { publishAutopinState, useAutopinState } from "./state";
 
-const POLL_MS = 10_000;
 const RULES: ProjectRule[] = ["default", "always", "never"];
 
 // Messages are kept as data and translated at render, so a language change
 // also updates a message that is already shown.
-type ReadError = "settings" | "projects";
 type Feedback = { kind: "default" } | { kind: "rule"; project: string; rule: ProjectRule };
+type Colors = PluginScreenProps["theme"]["colors"];
 
-export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
-  const ensure = useRpc(autopinEnsure);
-  const listProjects = useRpc(autopinProjects);
-  const toggle = useRpc(autopinToggle);
-  const setRule = useRpc(autopinSetProjectRule);
-  const { enabled, running, projectRules } = useAutopinState();
+export function AutoPinPanel({ theme, layout, host }: PluginScreenProps) {
+  const settings = useSettings(autopinSettings);
   const { t } = useTranslation(messages);
-  const [projects, setProjects] = useState<AutopinProject[] | null>(null);
   const [query, setQuery] = useState("");
-  const [readError, setReadError] = useState<ReadError | null>(null);
-  const [saveError, setSaveError] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const busyRef = useRef(false);
-  const pollingRef = useRef(false);
-  const generationRef = useRef(0);
-  const mountedRef = useRef(true);
+  const search = query.trim().toLocaleLowerCase();
+  const all = useProjects({ hosts: [host.id] });
+  const projects = useProjects({
+    hosts: [host.id],
+    where: (project) => !search || `${project.displayName} ${project.rootPath}`.toLocaleLowerCase().includes(search),
+    orderBy: (a, b) => a.displayName.localeCompare(b.displayName) || a.rootPath.localeCompare(b.rootPath),
+  });
   const colors = theme.colors;
 
-  const refresh = useCallback(async () => {
-    if (pollingRef.current) return;
-    pollingRef.current = true;
-    const generation = generationRef.current;
-    setRefreshing(true);
-    try {
-      // A project-list failure should not hide the saved default.
-      const [settings, directory] = await Promise.allSettled([ensure({}), listProjects({})]);
-      if (generation !== generationRef.current) return;
-      if (settings.status === "fulfilled") publishAutopinState(settings.value);
-      if (directory.status === "fulfilled") setProjects(directory.value.projects);
-      setReadError(settings.status === "rejected" ? "settings" : directory.status === "rejected" ? "projects" : null);
-    } finally {
-      if (generation === generationRef.current) {
-        pollingRef.current = false;
-        setRefreshing(false);
-      }
-    }
-  }, [ensure, listProjects]);
-
-  useEffect(() => {
-    pollingRef.current = false;
-    void refresh();
-    const timer = setInterval(() => { void refresh(); }, POLL_MS);
-    return () => {
-      generationRef.current += 1;
-      clearInterval(timer);
-    };
-  }, [refresh]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  const save = async (operation: () => Promise<AutopinState>, done: Feedback) => {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
+  const values = settings.status === "ready" ? settings.values : null;
+  const busy = settings.saving;
+  const disabled = busy || values === null;
+  const save = async (next: AutopinValues, done: Feedback) => {
+    if (settings.status !== "ready" || settings.saving) return;
     setFeedback(null);
-    try {
-      const result = await operation();
-      if (!mountedRef.current) return;
-      publishAutopinState(result);
-      setSaveError(false);
-      setFeedback(done);
-    } catch {
-      if (mountedRef.current) setSaveError(true);
-    } finally {
-      busyRef.current = false;
-      if (mountedRef.current) setBusy(false);
-    }
+    if (await settings.save(next, settings.revision)) setFeedback(done);
   };
 
-  const search = query.trim().toLocaleLowerCase();
-  const filtered = projects?.filter((project) =>
-    !search || `${project.name} ${project.path}`.toLocaleLowerCase().includes(search));
-  const known = enabled !== null;
-  const disabled = busy || !known;
   const muted = { color: colors.foregroundMuted };
   const foreground = { color: colors.foreground };
   const card = { backgroundColor: colors.surface1, borderColor: colors.border };
@@ -120,23 +59,20 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
       <View style={[styles.card, card]}>
         <Pressable accessibilityRole="switch"
           accessibilityLabel={t("switch.label")}
-          accessibilityState={{ checked: enabled === true, disabled }}
-          aria-checked={enabled === true}
+          accessibilityState={{ checked: values?.enabled === true, disabled }}
+          aria-checked={values?.enabled === true}
           disabled={disabled}
-          onPress={() => void save(() => toggle({}), { kind: "default" })}
+          onPress={() => values && void save({ ...values, enabled: !values.enabled }, { kind: "default" })}
           style={({ pressed }) => [styles.defaultRow, { opacity: pressed || disabled ? 0.65 : 1 }]}>
           <View style={styles.defaultCopy}>
             <Text style={[styles.label, foreground]}>{t("switch.label")}</Text>
             <Text style={[styles.small, muted]}>
-              {known ? t(enabled ? "panel.defaultOn" : "panel.defaultOff") : t("panel.loadingSettings")}
+              {values ? t(values.enabled ? "panel.defaultOn" : "panel.defaultOff") : t("panel.loadingSettings")}
             </Text>
           </View>
           <View style={styles.titleRow}>
-            <Text style={[styles.label, foreground]}>{known ? t(enabled ? "switch.on" : "switch.off") : "…"}</Text>
-            <View style={[styles.switchTrack, { backgroundColor: enabled ? colors.accent : colors.surface2,
-              borderColor: enabled ? colors.accent : colors.border, alignItems: enabled ? "flex-end" : "flex-start" }]}>
-              <View style={[styles.switchThumb, { backgroundColor: enabled ? colors.accentForeground : colors.foregroundMuted }]} />
-            </View>
+            <Text style={[styles.label, foreground]}>{values ? t(values.enabled ? "switch.on" : "switch.off") : "…"}</Text>
+            <Switch on={values?.enabled === true} colors={colors} />
           </View>
         </Pressable>
         <Text style={[styles.defaultHint, styles.small, muted, { borderColor: colors.border }]}>
@@ -145,86 +81,50 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
       </View>
 
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text accessibilityRole="header" style={[styles.sectionTitle, foreground]}>{t("panel.projects")}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel={t("panel.refreshLabel")}
-            disabled={refreshing} onPress={() => void refresh()} style={styles.textButton}>
-            <Icon name="RefreshCw" size={14} color={colors.foregroundMuted} />
-            <Text style={[styles.small, muted]}>{t(refreshing ? "panel.refreshing" : "panel.refresh")}</Text>
-          </Pressable>
-        </View>
+        <Text accessibilityRole="header" style={[styles.sectionTitle, foreground]}>{t("panel.projects")}</Text>
         <Text style={[styles.small, muted]}>
           {t("panel.rulesHint")}
         </Text>
-        {projects && projects.length > 0 ? (
+        {all.length > 0 ? (
           <TextInput accessibilityLabel={t("panel.search")} placeholder={t("panel.search")}
             placeholderTextColor={colors.foregroundMuted} value={query} onChangeText={setQuery}
             autoCorrect={false} autoCapitalize="none"
             style={[styles.search, foreground, card]} />
         ) : null}
 
-        {projects === null ? (
-          <Text style={[styles.empty, muted]}>{t(readError ? "panel.projectsUnavailable" : "panel.loadingProjects")}</Text>
-        ) : projects.length === 0 ? (
+        {all.length === 0 ? (
           <View style={[styles.emptyCard, card]}>
             <Text style={[styles.label, foreground]}>{t("panel.emptyTitle")}</Text>
             <Text style={[styles.small, muted]}>{t("panel.emptyHint")}</Text>
           </View>
-        ) : filtered?.length === 0 ? (
+        ) : projects.length === 0 ? (
           <Text style={[styles.empty, muted]}>{t("panel.noMatch", { query: query.trim() })}</Text>
         ) : (
           <View style={[styles.projectList, card]}>
-            {filtered?.map((project, index) => {
-              const rule = Object.hasOwn(projectRules, project.id) ? projectRules[project.id] : "default";
-              const effective = rule === "always" || (rule === "default" && enabled);
-              return (
-                <View key={project.id} style={[styles.projectRow, {
-                  borderColor: colors.border, borderTopWidth: index === 0 ? 0 : 1,
-                }]}>
-                  <View style={styles.projectInfo}>
-                    <Text style={[styles.label, foreground]}>{project.name}</Text>
-                    <Text selectable style={[styles.path, muted]}>{project.path}</Text>
-                  </View>
-                  <View style={styles.ruleControls}>
-                    <View accessibilityRole="radiogroup" accessibilityLabel={t("panel.ruleGroup", { project: project.name })}
-                      style={[styles.ruleGroup, { backgroundColor: colors.surface0, borderColor: colors.border }]}>
-                      {RULES.map((option) => (
-                        <Pressable key={option} accessibilityRole="radio"
-                          accessibilityLabel={t("panel.ruleOption", { project: project.name, rule: t(`rules.${option}`) })}
-                          accessibilityState={{ checked: rule === option, disabled }}
-                          aria-checked={rule === option}
-                          disabled={disabled}
-                          onPress={() => rule !== option && void save(
-                            () => setRule({ projectId: project.id, rule: option }),
-                            { kind: "rule", project: project.name, rule: option },
-                          )}
-                          style={({ pressed }) => [styles.ruleButton, {
-                            backgroundColor: rule === option ? colors.accent : "transparent",
-                            opacity: pressed || busy ? 0.65 : 1,
-                          }]}>
-                          <Text style={[styles.ruleLabel, {
-                            color: rule === option ? colors.accentForeground : colors.foregroundMuted,
-                          }]}>{t(`rules.${option}`)}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                    <Text style={[styles.small, muted]}>
-                      {t(!known ? "panel.loading" : effective ? "panel.willPin" : "panel.willStayUnpinned")}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
+            {projects.map((ref, index) => (
+              <ProjectRow key={ref.key} projectRef={ref} first={index === 0} values={values} busy={busy}
+                colors={colors} onRule={(project, rule) => values && void save(
+                  withRule(values, ref.id, rule), { kind: "rule", project, rule },
+                )} />
+            ))}
           </View>
         )}
       </View>
 
-      {saveError ? <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger }]}>{t("errors.save")}</Text> : null}
-      {readError ? (
+      {settings.saveError ? (
+        <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger }]}>{t("errors.save")}</Text>
+      ) : null}
+      {settings.status === "error" || settings.status === "invalid" ? (
         <View style={styles.errorRow}>
-          <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger, flex: 1 }]}>{t(`errors.${readError}`)}</Text>
-          <Pressable accessibilityRole="button" disabled={refreshing} onPress={() => void refresh()} style={styles.textButton}>
-            <Text style={[styles.label, { color: colors.accent }]}>{t("panel.retry")}</Text>
+          <Text accessibilityRole="alert" style={[styles.small, { color: colors.statusDanger, flex: 1 }]}>
+            {t(settings.status === "error" ? "errors.settings" : "errors.invalid")}
+          </Text>
+          <Pressable accessibilityRole="button" disabled={busy}
+            onPress={() => void (settings.status === "error" ? settings.reload() : settings.reset())}
+            style={styles.textButton}>
+            <Text style={[styles.label, { color: colors.accent }]}>
+              {t(settings.status === "error" ? "panel.retry" : "panel.resetSettings")}
+            </Text>
           </Pressable>
         </View>
       ) : null}
@@ -233,18 +133,68 @@ export function AutoPinPanel({ theme, layout }: PluginScreenProps) {
       </Text>
 
       <View style={[styles.footer, { borderColor: colors.border }]}>
-        <View style={styles.titleRow}>
-          <Icon name={running ? "Check" : "CircleDashed"} size={14}
-            color={readError ? colors.statusWarning : running ? colors.statusSuccess : colors.foregroundMuted} />
-          <Text style={[styles.small, muted]}>
-            {t(readError ? "panel.connectionProblem" : running === null ? "panel.connecting" : running ? "panel.ready" : "panel.notReady")}
-          </Text>
-        </View>
         <Text style={[styles.small, muted]}>
           {t("panel.footer")}
         </Text>
       </View>
     </ScrollView>
+  );
+}
+
+function ProjectRow({ projectRef, first, values, busy, colors, onRule }: {
+  projectRef: ProjectRef;
+  first: boolean;
+  values: AutopinValues | null;
+  busy: boolean;
+  colors: Colors;
+  onRule(project: string, rule: ProjectRule): void;
+}) {
+  const project = useProject(projectRef);
+  const { t } = useTranslation(messages);
+  if (!project) return null;
+  const rule = values ? ruleFor(values, projectRef.id) : "default";
+  const disabled = busy || values === null;
+  const muted = { color: colors.foregroundMuted };
+  return (
+    <View style={[styles.projectRow, { borderColor: colors.border, borderTopWidth: first ? 0 : 1 }]}>
+      <View style={styles.projectInfo}>
+        <Text style={[styles.label, { color: colors.foreground }]}>{project.displayName}</Text>
+        <Text selectable style={[styles.path, muted]}>{project.rootPath}</Text>
+      </View>
+      <View style={styles.ruleControls}>
+        <View accessibilityRole="radiogroup" accessibilityLabel={t("panel.ruleGroup", { project: project.displayName })}
+          style={[styles.ruleGroup, { backgroundColor: colors.surface0, borderColor: colors.border }]}>
+          {RULES.map((option) => (
+            <Pressable key={option} accessibilityRole="radio"
+              accessibilityLabel={t("panel.ruleOption", { project: project.displayName, rule: t(`rules.${option}`) })}
+              accessibilityState={{ checked: rule === option, disabled }}
+              aria-checked={rule === option}
+              disabled={disabled}
+              onPress={() => rule !== option && onRule(project.displayName, option)}
+              style={({ pressed }) => [styles.ruleButton, {
+                backgroundColor: rule === option ? colors.accent : "transparent",
+                opacity: pressed || busy ? 0.65 : 1,
+              }]}>
+              <Text style={[styles.ruleLabel, {
+                color: rule === option ? colors.accentForeground : colors.foregroundMuted,
+              }]}>{t(`rules.${option}`)}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={[styles.small, muted]}>
+          {t(!values ? "panel.loading" : shouldPin(values, projectRef.id) ? "panel.willPin" : "panel.willStayUnpinned")}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function Switch({ on, colors }: { on: boolean; colors: Colors }) {
+  return (
+    <View style={[styles.switchTrack, { backgroundColor: on ? colors.accent : colors.surface2,
+      borderColor: on ? colors.accent : colors.border, alignItems: on ? "flex-end" : "flex-start" }]}>
+      <View style={[styles.switchThumb, { backgroundColor: on ? colors.accentForeground : colors.foregroundMuted }]} />
+    </View>
   );
 }
 
@@ -263,7 +213,6 @@ const styles = StyleSheet.create({
   switchTrack: { width: 38, height: 24, borderRadius: 12, borderWidth: 1, padding: 3, justifyContent: "center" },
   switchThumb: { width: 16, height: 16, borderRadius: 8 },
   section: { gap: 12 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sectionTitle: { fontSize: 16, fontWeight: "600" },
   textButton: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 36, paddingHorizontal: 4 },
   search: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13 },

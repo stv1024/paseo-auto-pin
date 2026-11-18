@@ -1,12 +1,22 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
-import { autopinEnsure, autopinProjects, autopinSetProjectRule, autopinToggle } from "./shared/contracts";
-import { handleEnsure, handleProjects, handleSetProjectRule, handleToggle } from "./server/handlers";
+import { autopinLegacy, autopinSettings, MISSING_REVISION } from "./shared/settings";
+import { readLegacy, removeLegacy } from "./server/legacy";
 import { registerAutoPin } from "./server/lifecycle";
 
 export default function contribute(server: PluginServerContext) {
-  server.handle(autopinEnsure, handleEnsure);
-  server.handle(autopinToggle, handleToggle);
-  server.handle(autopinProjects, handleProjects);
-  server.handle(autopinSetProjectRule, handleSetProjectRule);
-  return registerAutoPin(server);
+  const settings = server.registerSettings(autopinSettings);
+  server.handle(autopinLegacy, async () => {
+    const state = await settings.read();
+    return { values: state.revision === MISSING_REVISION ? await readLegacy() : null };
+  });
+  // Once the settings document exists, the old file has no use.
+  const unsubscribe = settings.subscribe(() => removeLegacy());
+  void settings.read().then((state) => {
+    if (state.revision !== MISSING_REVISION) return removeLegacy();
+  });
+  const removeHook = registerAutoPin(server, settings);
+  return () => {
+    removeHook();
+    unsubscribe();
+  };
 }

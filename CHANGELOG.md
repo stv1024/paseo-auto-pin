@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.7.0 — 2026-11-18
+
+- Require Paseo **0.16.0** or later (`>=0.16.0`). Use Auto-Pin 0.6.0 on Paseo
+  0.13 to 0.15.
+- Save the default and the project rules as Paseo plugin settings
+  (`defineSettings`, host scope) instead of `plugin-data/auto-pin.json`. A change
+  on one client shows on the other clients at once, so the panel and the
+  sidebar switch no longer poll the daemon, and the panel has no **Refresh**
+  button.
+- Keep the settings of 0.6 and earlier. The first Paseo app that connects copies
+  them into the plugin settings, and the plugin then deletes the old file. Until
+  then, the old file still decides which workspaces get pinned.
+- Pin through the public Paseo API (`workspaces.ref(id).setPinned`). The plugin
+  no longer opens its own daemon connection, so it has no runtime dependencies:
+  `@getpaseo/client`, `npm-shrinkwrap.json`, and the manifest's `npm ci` build
+  step are gone. This also removes the second `zod` copy that the pinned client
+  brought into the plugin process.
+- Register the hook with `addHook("workspace.create.after")`. The deprecated
+  `on("workspace.created")` stops working after 2027-04-30.
+- List projects with `useProjects`, which updates by itself, instead of a
+  plugin RPC. The four RPCs `autopin.ensure`, `autopin.toggle`,
+  `autopin.projects`, and `autopin.set-project-rule` are gone.
+- Remove the Paseo 0.9 workaround material: `patches/`,
+  `scripts/repro-workspace-race.mjs`, and `docs/paseo-workspace-race.md`.
+- Update the Paseo SDK to 0.16.1 and verify Paseo **0.16.1** with the
+  integration suite, including the upgrade from 0.6 settings.
+
 ## 0.6.0 — 2026-10-27
 
 - Translate the panel, the sidebar switch, and the Command Center titles into

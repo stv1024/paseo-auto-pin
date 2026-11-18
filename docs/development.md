@@ -1,27 +1,25 @@
 # Developing Auto-Pin
 
-Auto-Pin 0.6.0 requires Paseo **>=0.13.0**, with no upper version limit. The
-client uses the runtime translation API (`defineTranslations`, `useTranslation`,
-and translated command titles) and imports `Icon` from
-`@getpaseo/plugin/client/ui`; Paseo 0.12 and earlier lack these. The
-integration suite has been verified with Paseo **0.13.0**, **0.13.1**, and
-**0.13.2**. Later stable versions may load without changing the manifest, but
-this is not a guarantee that future Paseo API changes will remain compatible.
-Auto-Pin 0.5.2 remains the release for Paseo 0.11 and 0.12.
+Auto-Pin 0.7.0 requires Paseo **>=0.16.0**, with no upper version limit. It
+uses `defineSettings` for its values, `addHook("workspace.create.after")` for
+new workspaces, `workspaces.ref(id).setPinned` to pin, and `useProjects` for the
+project list. The integration suite has been verified with Paseo **0.16.1**.
+Later stable versions may load without changing the manifest, but this is not a
+guarantee that future Paseo API changes will remain compatible. Auto-Pin 0.6.0
+remains the release for Paseo 0.13 to 0.15.
 
-Both Paseo SDK dependencies are pinned to **0.13.0** for repeatable builds; these
-dependency pins do not restrict the host's version. The host supplies React and
-React Native at runtime. Keep the SDK versions in sync and rerun integration
-checks against both the minimum supported host and the latest stable host when
-updating them.
+The plugin has **no runtime dependencies**. The Paseo SDK packages
+(`@getpaseo/plugin`, `@getpaseo/client`, `@getpaseo/protocol`) are development
+dependencies, pinned to **0.16.1** for repeatable type checks. Paseo supplies the
+SDK, `zod`, React, and React Native when it compiles and runs the plugin. Keep
+the three SDK versions in sync and rerun the integration check against both the
+minimum supported host and the latest stable host when updating them.
 
-The two pins have different roles. `@getpaseo/plugin` is a development
-dependency: Paseo resolves it while it compiles the plugin. `@getpaseo/client`
-is a **runtime dependency**, because `server/pin.ts` imports `DaemonClient` from
-the `@getpaseo/client/internal/daemon-client` subpath. An installation that
-installs runtime dependencies must ship a lockfile that fixes the tree, so
-`npm-shrinkwrap.json` is committed, listed in `files`, and published. The
-registry review rejects a package that declares dependencies without it.
+Do not add a runtime dependency without a strong reason. A package with
+dependencies must ship a lockfile (`npm-shrinkwrap.json`) for the registry
+review, and the Git installation then needs an `npm ci` build step.
+`scripts/pack-npm.mjs` refuses to pack while `package.json` has `dependencies`
+or the manifest has `build`.
 
 ## Local setup
 
@@ -34,10 +32,7 @@ paseo plugin reload auto-pin
 paseo plugin logs auto-pin
 ```
 
-Git installations and updates run the manifest's `npm ci` build step before
-Paseo compiles the plugin. Local-directory installations use `reload` after edits.
-Managed npm installations install production dependencies automatically and use
-a published manifest without the Git-only build step.
+Local-directory installations use `reload` after edits.
 
 ## Publishing on npm
 
@@ -53,7 +48,7 @@ Release sequence:
 1. Bump `version` in `package.json` and add the changelog section.
 2. Run the checks and pack the tarball (below).
 3. Commit, push `main`, tag the release commit, and push the tag:
-   `git tag -a v0.6.0 -m "Auto-Pin 0.6.0" && git push origin v0.6.0`.
+   `git tag -a v0.7.0 -m "Auto-Pin 0.7.0" && git push origin v0.7.0`.
    The tag push starts the workflow. A tag that does not match the packed
    version fails the run before it reaches npm.
 4. Create the GitHub release from that tag.
@@ -67,11 +62,9 @@ npm run pack:npm
 ```
 
 The command prints the tarball path, integrity, and included files. It stages a
-package in a fresh temporary directory, removes `private` and development scripts,
-and omits only the known Git dependency-install command from the staged manifest.
-The source repository stays private to npm to prevent accidental direct publishing.
-Check that the printed file list contains `npm-shrinkwrap.json`; a tarball without
-it is rejected by the registry review.
+package in a fresh temporary directory and removes `private` and development
+scripts. The source repository stays private to npm to prevent accidental direct
+publishing.
 
 Install the printed tarball into a separate test directory with
 `npm install --prefix /path/to/package-test --ignore-scripts --omit=dev --legacy-peer-deps /path/to/paseo-auto-pin-VERSION.tgz`.
@@ -93,53 +86,67 @@ interchangeable.
 
 ## How it works
 
-The server registers a `workspace.created` lifecycle hook. For each new,
-non-archived workspace, it looks up a rule by the event's `projectId`:
+The server adds a `workspace.create.after` hook. For each new, non-archived
+workspace, it reads the settings and looks up a rule by the workspace's
+`projectId`:
 
 1. **Always** pins the workspace.
 2. **Never** skips it.
 3. No override uses the saved default.
 
+It pins with `paseo.workspaces.ref(id).setPinned(true)` from the hook context.
 The hook works without a connected client. It does not scan old workspaces,
 respond to archive restoration, or unpin anything. Project names and paths are
 display information; matching uses Paseo's project ID, so two projects with the
 same display name have independent rules.
 
-The panel reads projects through the public `paseo.projects.list()` API. The list
-includes projects with no active workspace. A saved rule stays associated with
-its project ID; it does not transfer to a different project created with the same
-name or path.
+The panel lists projects with `useProjects({ hosts: [host.id] })` and reads each
+row with `useProject(ref)`. The list includes projects with no active workspace
+and updates by itself. A saved rule stays associated with its project ID; it
+does not transfer to a different project created with the same name or path.
 
-### Settings and concurrent changes
+### Settings
 
-Settings live in `$PASEO_HOME/plugin-data/auto-pin.json`, defaulting to
-`~/.paseo/plugin-data/auto-pin.json`:
+`shared/settings.ts` defines one settings document, `autopin`, with host scope:
 
 ```json
 {
   "enabled": true,
   "projectRules": {
     "example-project-id": "never"
-  },
-  "revision": 1
+  }
 }
 ```
 
 `enabled` is the default, not a master switch. Only overrides are stored;
-choosing **Follow default** removes that project's entry.
+choosing **Follow default** removes that project's entry. Paseo stores the
+document in `$PASEO_HOME/plugin-settings/auto-pin/autopin.json`, validates every
+write against the schema, and rejects a write whose revision is stale.
 
-The old `{"enabled": false}` format loads without migration steps and is not
-rewritten until a setting changes. Missing or malformed values use defaults;
-invalid rule entries are ignored individually. File access errors are surfaced.
+The panel and the sidebar switch use `useSettings`. Paseo pushes each saved
+change to every connected client, so nothing polls. The Command Center items
+cannot use hooks, so `client/settings.ts` reads and writes through
+`settingsRpc("autopin")`, and reads again once after a revision conflict.
 
-All mutations share one queue. Each save changes only the requested setting,
-increments the revision, and replaces the file through a temporary file in the
-same directory. The cache updates only after a successful save.
+An invalid stored document (for example a hand edit that breaks the schema)
+shows an error and a **Reset to defaults** button in the panel. The hook pins
+nothing while the document is invalid.
 
-Same-client changes reach the panel through a shared React store. Open panels
-refresh settings and the project list every 10 seconds; **Refresh** checks
-immediately. Revisions prevent a delayed read from replacing newer settings.
-Read errors and save errors are shown separately.
+### Upgrade from 0.6 and earlier
+
+Auto-Pin 0.6 and earlier kept the same two values in
+`$PASEO_HOME/plugin-data/auto-pin.json`. The server's settings handle has only
+`read()` and `subscribe()`, so the server cannot write the settings document
+itself. The upgrade works in three parts:
+
+1. While the settings document does not exist (its revision is `"missing"`), the
+   hook reads the old file. Pinning keeps the old behavior from the first second.
+2. The client entry calls `importLegacy`: when the revision is `"missing"`, it
+   gets the old values from the `autopin.legacy` RPC and writes them against the
+   revision `"missing"`. Paseo rejects that write when another client saved
+   first, so an existing document is never overwritten.
+3. When the settings document exists (at start, or on the first change), the
+   server deletes the old file.
 
 ### Translations
 
@@ -165,47 +172,25 @@ Keep messages as data and translate them when they render. For example, the
 panel stores the last saved rule, not a sentence, so its status line follows a
 language change.
 
-Settings are cached by the plugin process. If you edit the JSON manually, reload
-the plugin, then reopen the panel. Prefer the panel for normal changes.
-
-### Paseo integration limits
-
-Paseo 0.9.2 through 0.12.x can display an old creation snapshot after the live
-pin update; Paseo 0.13.0 fixes this in the app. See
-[the known issue, its fix, and the maintenance policy](paseo-workspace-race.md).
-Host state synchronization fixes belong upstream. Keep the plugin's creation
-hook independent of response timing and preserve manual unpinning.
-
-Paseo 0.13.0's public `PaseoApi` still has no pin mutation, and the
-`workspace.create` request has no pin field for a `before` hook to set. The pin adapter uses
-`DaemonClient` from `@getpaseo/client/internal/daemon-client` over a short-lived
-connection to the local daemon. This is the only internal SDK integration.
-
-The adapter reads `daemon.listen` from Paseo's config and defaults to
-`127.0.0.1:6767`. Connection attempts time out after five seconds. Hook cancellation
-closes the connection and blocks late handshakes from sending a pin request.
-Cancellation cannot undo a request the daemon already accepted.
-
-Paseo's native server settings handle has `read()` and `subscribe()`, but no
-write method in 0.13.0, so Auto-Pin retains its own settings file and RPCs.
+### RPCs
 
 | RPC | Purpose |
 | --- | --- |
-| `autopin.ensure` | Read hook status and settings; the name is kept for compatibility. |
-| `autopin.toggle` | Toggle the default and return saved settings. |
-| `autopin.projects` | List projects for the panel. |
-| `autopin.set-project-rule` | Save `default`, `always`, or `never` for one project. |
+| `settings.autopin.read` / `.write` / `.reset` | Paseo's settings RPCs for the `autopin` document. |
+| `autopin.legacy` | The values of the 0.6 file while the settings document does not exist, else `null`. |
 
 ## Verification
 
-`npm test` covers rule precedence, old settings, concurrent saves, failed writes,
-stale client responses, lifecycle cancellation, and the pin transport.
+`npm test` covers rule precedence, the settings defaults, the 0.6 file (read,
+damaged, removed), the one-time import, conflict handling for Command Center
+writes, and the hook (archived workspaces, cancellation, failures, invalid
+settings).
 
 For an integration check against an actual daemon, install its runtime outside
 this repository:
 
 ```bash
-npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.13.2
+npm install --prefix /path/to/paseo-test-runtime --no-save --ignore-scripts @getpaseo/cli@0.16.1 pino
 npm run test:integration -- --runtime /path/to/paseo-test-runtime
 ```
 
@@ -215,11 +200,12 @@ minimum version in another runtime directory. To check a future stable release, 
 that real version to the daemon, so manifest validation uses the host under
 test rather than a hard-coded version.
 
-Git must be available. The script creates a temporary Paseo home, repositories,
-and worktrees, using an automatically assigned loopback port. AI providers,
-relay, and speech are disabled. It verifies loading and client compilation,
-project discovery, rule precedence for real worktrees, settings preservation,
-invalid input, archive restoration, concurrent saves, and plugin reload.
+Git must be available. The script creates a temporary Paseo home with a 0.6
+settings file, repositories, and worktrees, using an automatically assigned
+loopback port. AI providers, relay, and speech are disabled. It verifies loading
+and client compilation, the 0.6 file before and after the import, the removal of
+the old file, rule precedence for real worktrees, invalid input, archive
+restoration, concurrent saves, and plugin reload.
 
 The daemon stops at the end. The printed temporary directory retains logs and
 test data for inspection. This does not touch your normal Paseo home.
@@ -231,28 +217,27 @@ For a fresh managed Git installation, add
 you want to test.
 
 Before a release, also check the panel at desktop and narrow widths: change
-each rule, toggle the default, search, reconnect, and confirm failures leave the
-previous selection visible. Check the Command Center with the panel open, and
-flip the sidebar header switch while the panel is open and closed. Plugin
-commands appear in the Command Center only while a workspace is open. Repeat the
-check in Simplified Chinese: set **Settings → General → Language** to 简体中文,
-or open the web app in a browser whose language is `zh-CN` while the setting is
-**System**. Switch back to English and confirm that the panel, the sidebar
-switch, and the command titles change without a reload.
+each rule, toggle the default, and search. Open the panel in two windows and
+confirm that a change in one shows in the other. Check the Command Center with
+the panel open, and flip the sidebar header switch while the panel is open and
+closed. Plugin commands that act on a project appear in the Command Center only
+while a workspace is open. Repeat the check in Simplified Chinese: set
+**Settings → General → Language** to 简体中文, or open the web app in a browser
+whose language is `zh-CN` while the setting is **System**. Switch back to
+English and confirm that the panel, the sidebar switch, and the command titles
+change without a reload.
 
 ## Files to start with
 
 | File | Responsibility |
 | --- | --- |
-| `server/lifecycle.ts` | Decide whether to pin each new workspace. |
-| `server/store.ts` | Load, save, and resolve project rules. |
-| `server/pin.ts` | Version-specific pin transport. |
-| `server/handlers.ts` | Settings and project RPC handlers. |
-| `shared/contracts.ts` | Shared RPC schemas and types. |
-| `client/panel.tsx` | Settings screen. |
-| `client/messages.ts`, `client/locales/` | Translated UI text. |
+| `shared/settings.ts` | Settings document, rule helpers, and the `autopin.legacy` RPC. |
+| `server/lifecycle.ts` | Decide whether to pin each new workspace, and pin it. |
+| `server/legacy.ts` | Read and delete the 0.6 settings file. |
+| `client/panel.tsx` | Auto-Pin screen with the default and the project rules. |
 | `client/sidebar.tsx` | Sidebar header row with the default switch. |
-| `client/state.ts` | Shared client state and revision handling. |
+| `client/settings.ts` | Command Center writes and the one-time import. |
+| `client/messages.ts`, `client/locales/` | Translated UI text. |
 | `index.server.ts` / `index.client.tsx` | Register contributions. |
 | `assets/` | Registry icon and screenshots referenced by the manifest. |
 | `scripts/integration.mjs` | Isolated daemon verification. |
@@ -272,5 +257,5 @@ Simplified Chinese. Only the registry reads them; Paseo ignores both. When
 the same change. `OVERVIEW.zh-CN.md` is a complete page, not a partial override,
 and has the same rules as `OVERVIEW.md`.
 
-When changing the supported Paseo version, recheck the internal pin adapter,
-manifest validation, client/server compilation, and the daemon integration.
+When changing the supported Paseo version, recheck manifest validation,
+client/server compilation, and the daemon integration.

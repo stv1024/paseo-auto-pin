@@ -1,57 +1,36 @@
-import { useRpc, useTranslation, type PluginSidebarItemProps } from "@getpaseo/plugin/client";
+import { useSettings, useTranslation, type PluginSidebarItemProps } from "@getpaseo/plugin/client";
 import { SidebarRow } from "@getpaseo/plugin/client/ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { autopinEnsure, autopinToggle } from "../shared/contracts";
+import { autopinSettings } from "../shared/settings";
 import { messages } from "./messages";
-import { publishAutopinState, useAutopinState } from "./state";
 
 export const SCREEN_ID = "autopin";
-// Picks up changes made on other clients; same-client changes arrive through the store.
-const POLL_MS = 60_000;
 
 export function AutoPinSidebarItem({ theme, currentScreen, openScreen }: PluginSidebarItemProps) {
-  const ensure = useRpc(autopinEnsure);
-  const toggle = useRpc(autopinToggle);
-  const { enabled } = useAutopinState();
+  const settings = useSettings(autopinSettings);
   const { t } = useTranslation(messages);
-  const [busy, setBusy] = useState(false);
-  const busyRef = useRef(false);
   const colors = theme.colors;
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      ensure({}).then(publishAutopinState).catch(() => { /* The panel reports connection failures. */ });
-    }, POLL_MS);
-    return () => clearInterval(timer);
-  }, [ensure]);
+  const ready = settings.status === "ready";
+  const enabled = ready && settings.values.enabled;
+  const busy = settings.saving;
 
   const open = useCallback(() => openScreen({ screenId: SCREEN_ID }), [openScreen]);
-  const flip = useCallback(async () => {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
-    try {
-      publishAutopinState(await toggle({}));
-    } catch {
-      // Leave the previous state visible; the panel shows connection errors.
-    } finally {
-      busyRef.current = false;
-      setBusy(false);
-    }
-  }, [toggle]);
+  const flip = () => {
+    if (settings.status !== "ready" || settings.saving) return;
+    void settings.save({ ...settings.values, enabled: !settings.values.enabled }, settings.revision);
+  };
 
-  const known = enabled !== null;
   const trailing = (
     <Pressable accessibilityRole="switch"
       accessibilityLabel={t("switch.label")}
-      accessibilityState={{ checked: enabled === true, disabled: busy || !known }}
-      aria-checked={enabled === true}
-      disabled={busy || !known}
-      onPress={() => void flip()}
+      accessibilityState={{ checked: enabled, disabled: busy || !ready }}
+      aria-checked={enabled}
+      disabled={busy || !ready}
+      onPress={flip}
       hitSlop={6}
       style={({ pressed }) => [styles.toggle, { opacity: pressed || busy ? 0.6 : 1 }]}>
-      <Text style={[styles.state, { color: colors.foregroundMuted }]}>{known ? t(enabled ? "switch.on" : "switch.off") : "…"}</Text>
+      <Text style={[styles.state, { color: colors.foregroundMuted }]}>{ready ? t(enabled ? "switch.on" : "switch.off") : "…"}</Text>
       <View style={[styles.track, {
         backgroundColor: enabled ? colors.accent : colors.surface2,
         borderColor: enabled ? colors.accent : colors.border,

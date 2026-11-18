@@ -46,7 +46,9 @@ const persisted = {
   pluginsEnabled: true,
 };
 await writeFile(join(home, "config.json"), JSON.stringify(persisted));
-await writeFile(join(home, "plugin-data", "auto-pin.json"), '{"enabled":false}');
+// Auto-Pin 0.6 saved its values here. The upgrade must keep them.
+const legacyFile = join(home, "plugin-data", "auto-pin.json");
+await writeFile(legacyFile, '{"enabled":false,"revision":3}');
 const config = loadConfig(home, { env: {} });
 const disabledSpeech = { provider: "local", explicit: true, enabled: false };
 Object.assign(config, {
@@ -63,9 +65,22 @@ let daemon;
 let client;
 console.log(`Integration artifacts: ${testRoot}`);
 
+const rpc = (name, input = {}) => client.invokePluginRpc("auto-pin", name, input);
 async function state() {
-  return client.invokePluginRpc("auto-pin", "autopin.ensure", {});
+  const result = await rpc("settings.autopin.read");
+  assert.equal(result.status, "ready", JSON.stringify(result));
+  return result;
 }
+/** What a client does: read, change, and write against the read revision. Retries a conflict. */
+async function update(change) {
+  for (;;) {
+    const current = await state();
+    const result = await rpc("settings.autopin.write", { revision: current.revision, values: change(current.values) });
+    if (result.status === "saved") return result.values;
+    assert.equal(result.status, "conflict", JSON.stringify(result));
+  }
+}
+const toggle = () => update((values) => ({ ...values, enabled: !values.enabled }));
 async function workspace(id) {
   const result = await client.fetchWorkspaces();
   const entry = result.entries.find((item) => item.id === id);
@@ -91,8 +106,13 @@ async function createWorktree(projectId, name) {
   assert.ok(result.workspace, JSON.stringify(result));
   return result.workspace.id;
 }
-async function setRule(projectId, rule) {
-  return client.invokePluginRpc("auto-pin", "autopin.set-project-rule", { projectId, rule });
+function setRule(projectId, rule) {
+  return update((values) => {
+    const projectRules = { ...values.projectRules };
+    if (rule === "default") delete projectRules[projectId];
+    else projectRules[projectId] = rule;
+    return { ...values, projectRules };
+  });
 }
 async function assertPinned(id) {
   const deadline = Date.now() + 10_000;
@@ -124,11 +144,23 @@ try {
   else await client.installDirectoryPlugin(pluginDirectory);
   const catalog = await client.getPluginCatalog();
   assert.ok(catalog.find((item) => item.id === "auto-pin")?.clientBundle, "client bundle must be available");
-  assert.deepEqual(await state(), { running: true, enabled: false, projectRules: {}, revision: 0 });
-  console.log(`PASS: plugin loads on Paseo ${paseoVersion} and preserves disabled settings`);
-
+  const fresh = await state();
+  assert.equal(fresh.revision, "missing");
   await assertUnpinned(await createWorkspace("disabled-switch"));
-  assert.equal((await client.invokePluginRpc("auto-pin", "autopin.toggle", {})).enabled, true);
+  console.log(`PASS: plugin loads on Paseo ${paseoVersion}; the 0.6 file decides until it is imported`);
+
+  // The client entry imports the 0.6 file into the settings document once.
+  const legacy = await rpc("autopin.legacy");
+  assert.deepEqual(legacy, { values: { enabled: false, projectRules: {} } });
+  assert.equal((await rpc("settings.autopin.write", { revision: "missing", values: legacy.values })).status, "saved");
+  assert.equal((await rpc("settings.autopin.write", { revision: "missing", values: { enabled: true } })).status, "conflict");
+  assert.deepEqual(await rpc("autopin.legacy"), { values: null });
+  await delay(300);
+  await assert.rejects(() => readFile(legacyFile));
+  assert.deepEqual((await state()).values, { enabled: false, projectRules: {} });
+  console.log("PASS: the 0.6 settings are imported once, and the old file is removed");
+
+  assert.equal((await toggle()).enabled, true);
   const pinned = await createWorkspace("enabled-switch");
   await assertPinned(pinned);
   await assertUnpinned(existing);
@@ -146,33 +178,32 @@ try {
   await assertPinned(experiments);
   const workProject = (await workspace(work)).projectId;
   const experimentsProject = (await workspace(experiments)).projectId;
-  const projects = await client.invokePluginRpc("auto-pin", "autopin.projects", {});
-  assert.ok(projects.projects.some((item) => item.id === workProject && item.name === "Everyday"));
-  assert.ok(projects.projects.some((item) => item.id === experimentsProject && item.path.endsWith("Experiments")));
 
   await setRule(experimentsProject, "never");
   await assertUnpinned(await createWorktree(experimentsProject, "never-with-default-on"));
   await assertPinned(experiments);
-  await client.invokePluginRpc("auto-pin", "autopin.toggle", {});
+  await toggle();
   await setRule(workProject, "always");
   await assertPinned(await createWorktree(workProject, "always-with-default-off"));
   await assertUnpinned(await createWorktree(experimentsProject, "never-with-default-off"));
   await setRule(workProject, "default");
   await assertUnpinned(await createWorktree(workProject, "follow-default-off"));
-  await client.invokePluginRpc("auto-pin", "autopin.toggle", {});
+  await toggle();
   await assertPinned(await createWorktree(workProject, "follow-default-on"));
   console.log("PASS: project rules override the default for new worktrees; saved pins stay unchanged");
 
-  await assert.rejects(() => setRule(workProject, "invalid"));
-  assert.equal(Object.hasOwn((await state()).projectRules, workProject), false);
+  const beforeInvalid = await state();
+  const invalid = await rpc("settings.autopin.write", {
+    revision: beforeInvalid.revision,
+    values: { ...beforeInvalid.values, projectRules: { [workProject]: "invalid" } },
+  });
+  assert.equal(invalid.status, "invalid");
+  assert.deepEqual(await state(), beforeInvalid);
   console.log("PASS: invalid rules are rejected without changing settings");
 
-  const toggles = await Promise.all([
-    client.invokePluginRpc("auto-pin", "autopin.toggle", {}),
-    client.invokePluginRpc("auto-pin", "autopin.toggle", {}),
-  ]);
+  const toggles = await Promise.all([toggle(), toggle()]);
   assert.deepEqual(toggles.map((item) => item.enabled).sort(), [false, true]);
-  assert.equal((await state()).enabled, true);
+  assert.equal((await state()).values.enabled, true);
   await Promise.all([setRule(workProject, "always"), setRule(experimentsProject, "never")]);
   const beforeReload = await state();
   await client.reloadPlugin("auto-pin");
@@ -181,8 +212,8 @@ try {
   await assertPinned(await createWorkspace("after-plugin-reload"));
   await assertPinned(await createWorktree(workProject, "always-after-reload"));
   await assertUnpinned(await createWorktree(experimentsProject, "never-after-reload"));
-  const { running: _running, ...saved } = beforeReload;
-  assert.deepEqual(JSON.parse(await readFile(join(home, "plugin-data", "auto-pin.json"), "utf8")), saved);
+  const stored = JSON.parse(await readFile(join(home, "plugin-settings", "auto-pin", "autopin.json"), "utf8"));
+  assert.deepEqual(stored, { version: 1, values: beforeReload.values });
   console.log("PASS: concurrent saves serialize; reload preserves the default and project rules");
   console.log(`Paseo ${paseoVersion} integration passed.`);
   if (keepUi) {

@@ -23,13 +23,8 @@
     "loadingSettings": "正在加载设置…",
     "defaultHint": "设为“始终”或“从不”的项目不使用这个默认设置。",
     "projects": "项目",
-    "refreshLabel": "刷新项目和设置",
-    "refresh": "刷新",
-    "refreshing": "正在刷新…",
     "rulesHint": "“始终”会置顶该项目的新工作区，“从不”会让它们保持不置顶。",
     "search": "搜索项目",
-    "projectsUnavailable": "无法显示项目。",
-    "loadingProjects": "正在加载项目…",
     "emptyTitle": "你的项目会显示在这里",
     "emptyHint": "在 Paseo 中添加项目后，可以为它设置单独的自动置顶规则。",
     "noMatch": "没有与“{{query}}”匹配的项目。",
@@ -43,15 +38,12 @@
     "autosave": "更改会自动保存。",
     "defaultSaved": "已保存默认设置。",
     "ruleSaved": "已保存 {{project}}：{{rule}}。",
-    "connectionProblem": "连接出现问题",
-    "connecting": "正在连接…",
-    "ready": "已准备好处理新工作区",
-    "notReady": "Auto-Pin 尚未就绪。请尝试重新加载插件。",
-    "footer": "规则在创建工作区时生效。已有的置顶和恢复的工作区保持不变。"
+    "footer": "规则在创建工作区时生效。已有的置顶和恢复的工作区保持不变。",
+    "resetSettings": "恢复默认设置"
   },
   "errors": {
-    "settings": "无法刷新设置。请检查连接后重试。",
-    "projects": "无法加载项目。请检查连接后重试。",
-    "save": "无法确认这项更改。请检查连接，刷新后重试。"
+    "settings": "无法读取设置。请检查连接后重试。",
+    "invalid": "保存的设置无效。恢复默认设置后才能继续。",
+    "save": "无法保存这项更改。请检查连接后重试。"
   }
 }

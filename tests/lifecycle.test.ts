@@ -1,72 +1,120 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PluginServerContext, PluginHookContext, PluginLifecycleEvents } from "@getpaseo/plugin/server";
-import { registerAutoPin, isRunning } from "../server/lifecycle";
-import { shouldPinProject } from "../server/store";
-import { pinWorkspace } from "../server/pin";
+import type { PluginHookContext, PluginHookPayload, PluginServerContext } from "@getpaseo/plugin/server";
+import { currentValues, registerAutoPin, type AutopinSettings } from "../server/lifecycle";
+import { readLegacy } from "../server/legacy";
+import type { AutopinValues } from "../shared/settings";
 
-vi.mock("../server/store", () => ({ shouldPinProject: vi.fn(async () => true) }));
-vi.mock("../server/pin", () => ({ pinWorkspace: vi.fn(async () => {}) }));
+vi.mock("../server/legacy", () => ({ readLegacy: vi.fn(async () => null) }));
 afterEach(() => vi.clearAllMocks());
 
-function setup() {
-  let handler!: (event: PluginLifecycleEvents["workspace.created"], context: PluginHookContext) => void | Promise<void>;
-  const unsubscribe = vi.fn();
-  const on = vi.fn((name, fn) => { expect(name).toBe("workspace.created"); handler = fn; return unsubscribe; });
-  const cleanup = registerAutoPin({ on } as unknown as PluginServerContext);
-  const controller = new AbortController();
-  const event = { workspace: { id: "new", projectId: "p", cwd: "/tmp", name: null, archivedAt: null as string | null } };
-  const context = { signal: controller.signal } as PluginHookContext;
-  return { fire: () => handler(event, context), cleanup, unsubscribe, event, controller };
+function settingsWith(values: AutopinValues, revision = "r1"): AutopinSettings {
+  return {
+    read: vi.fn(async () => ({ status: "ready" as const, revision, values })),
+    subscribe: vi.fn(() => () => {}),
+  };
 }
 
-describe("workspace-created lifecycle", () => {
-  it("pins new workspaces and unregisters on unload", async () => {
+function setup(values: AutopinValues = { enabled: true, projectRules: {} }, settings = settingsWith(values)) {
+  let handler!: (payload: PluginHookPayload<"workspace.create.after">, context: PluginHookContext) => Promise<void>;
+  const remove = vi.fn();
+  const addHook = vi.fn((name: string, fn: typeof handler) => {
+    expect(name).toBe("workspace.create.after");
+    handler = fn;
+    return remove;
+  });
+  const cleanup = registerAutoPin({ addHook } as unknown as PluginServerContext, settings);
+  const setPinned = vi.fn(async () => ({ pinnedAt: "now" }));
+  const ref = vi.fn(() => ({ setPinned }));
+  const controller = new AbortController();
+  const payload = {
+    workspace: { id: "new", projectId: "p", cwd: "/tmp", name: null, archivedAt: null as string | null, metadata: {} },
+  };
+  const context = { signal: controller.signal, paseo: { workspaces: { ref } } } as unknown as PluginHookContext;
+  return { fire: () => handler(payload, context), cleanup, remove, payload, controller, ref, setPinned };
+}
+
+describe("workspace.create.after hook", () => {
+  it("pins new workspaces through the Paseo API and removes the hook on unload", async () => {
     const s = setup();
-    expect(isRunning()).toBe(true);
     await s.fire();
-    expect(shouldPinProject).toHaveBeenCalledExactlyOnceWith("p");
-    expect(pinWorkspace).toHaveBeenCalledExactlyOnceWith("new", s.controller.signal);
+    expect(s.ref).toHaveBeenCalledExactlyOnceWith("new");
+    expect(s.setPinned).toHaveBeenCalledExactlyOnceWith(true);
     s.cleanup();
-    expect(isRunning()).toBe(false);
-    expect(s.unsubscribe).toHaveBeenCalledOnce();
+    expect(s.remove).toHaveBeenCalledOnce();
   });
-  it("respects the project rule decision", async () => {
-    vi.mocked(shouldPinProject).mockResolvedValueOnce(false);
-    const s = setup(); await s.fire(); s.cleanup();
-    expect(pinWorkspace).not.toHaveBeenCalled();
+
+  it("follows the project rule over the default", async () => {
+    const never = setup({ enabled: true, projectRules: { p: "never" } });
+    await never.fire();
+    expect(never.setPinned).not.toHaveBeenCalled();
+    const always = setup({ enabled: false, projectRules: { p: "always" } });
+    await always.fire();
+    expect(always.setPinned).toHaveBeenCalledOnce();
+    const off = setup({ enabled: false, projectRules: {} });
+    await off.fire();
+    expect(off.setPinned).not.toHaveBeenCalled();
   });
-  it("ignores archived workspaces and aborted hooks", async () => {
-    const s = setup(); s.event.workspace.archivedAt = new Date().toISOString();
-    await s.fire(); s.event.workspace.archivedAt = null; s.controller.abort();
-    await s.fire(); s.cleanup();
-    expect(pinWorkspace).not.toHaveBeenCalled();
-  });
-  it("reports pin failures to the lifecycle host", async () => {
-    vi.mocked(pinWorkspace).mockRejectedValueOnce(new Error("offline"));
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    const s = setup(); await expect(s.fire()).rejects.toThrow("offline"); s.cleanup(); log.mockRestore();
-  });
-  it("does not pin when canceled while reading the rules", async () => {
+
+  it("ignores archived workspaces and canceled hooks", async () => {
     const s = setup();
-    vi.mocked(shouldPinProject).mockImplementationOnce(async () => {
-      s.controller.abort();
-      return true;
-    });
-    await s.fire(); s.cleanup();
-    expect(pinWorkspace).not.toHaveBeenCalled();
+    s.payload.workspace.archivedAt = new Date().toISOString();
+    await s.fire();
+    s.payload.workspace.archivedAt = null;
+    s.controller.abort();
+    await s.fire();
+    expect(s.setPinned).not.toHaveBeenCalled();
   });
-  it("does not report expected cancellation as a pin failure", async () => {
+
+  it("reports pin failures to the hook host", async () => {
     const s = setup();
+    s.setPinned.mockRejectedValueOnce(new Error("offline"));
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.mocked(pinWorkspace).mockImplementationOnce(async () => {
+    await expect(s.fire()).rejects.toThrow("offline");
+    log.mockRestore();
+  });
+
+  it("does not report a failure that follows cancellation", async () => {
+    const s = setup();
+    s.setPinned.mockImplementationOnce(async () => {
       s.controller.abort();
       throw s.controller.signal.reason;
     });
-    try {
-      await expect(s.fire()).resolves.toBeUndefined();
-      expect(log).not.toHaveBeenCalled();
-    } finally {
-      s.cleanup(); log.mockRestore();
-    }
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(s.fire()).resolves.toBeUndefined();
+    expect(log).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it("does not pin when the stored settings are invalid", async () => {
+    const settings: AutopinSettings = {
+      read: vi.fn(async () => ({ status: "invalid" as const, revision: "r1", error: "bad" })),
+      subscribe: vi.fn(() => () => {}),
+    };
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const s = setup(undefined, settings);
+    await s.fire();
+    expect(s.setPinned).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+});
+
+describe("currentValues", () => {
+  it("uses the 0.6 file until the settings document exists", async () => {
+    vi.mocked(readLegacy).mockResolvedValueOnce({ enabled: false, projectRules: { p: "always" } });
+    expect(await currentValues(settingsWith({ enabled: true, projectRules: {} }, "missing")))
+      .toEqual({ enabled: false, projectRules: { p: "always" } });
+  });
+
+  it("uses the defaults when neither exists", async () => {
+    expect(await currentValues(settingsWith({ enabled: true, projectRules: {} }, "missing")))
+      .toEqual({ enabled: true, projectRules: {} });
+  });
+
+  it("ignores the 0.6 file once settings are saved", async () => {
+    vi.mocked(readLegacy).mockResolvedValue({ enabled: false, projectRules: {} });
+    expect(await currentValues(settingsWith({ enabled: true, projectRules: {} }, "r2")))
+      .toEqual({ enabled: true, projectRules: {} });
+    expect(readLegacy).not.toHaveBeenCalled();
+    vi.mocked(readLegacy).mockReset();
   });
 });

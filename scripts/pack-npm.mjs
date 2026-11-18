@@ -9,10 +9,10 @@ import { promisify } from "node:util";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 const manifest = JSON.parse(await readFile(join(root, "paseo-plugin.json"), "utf8"));
-// Only this Git dependency-install step may be omitted. Future preparation
-// commands need an explicit publishing decision rather than silently disappearing.
-assert.deepEqual(manifest.build, [["npm", "ci", "--include=dev", "--ignore-scripts"]]);
-delete manifest.build;
+// The plugin has no runtime dependencies, so the manifest needs no build step.
+// A future build step needs an explicit publishing decision.
+assert.equal(manifest.build, undefined, "paseo-plugin.json must not have a build step");
+assert.equal(pkg.dependencies, undefined, "package.json must not have runtime dependencies");
 delete pkg.private;
 delete pkg.scripts;
 
